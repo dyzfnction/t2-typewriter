@@ -1,0 +1,7 @@
+Ce projet propose de transformer l’histoire du Typewriter Art en une expérience mobile immersive. Plutôt que de simplement présenter un article, nous explorons comment la machine à écrire qui est un outil mécanique et rétro a été détournée par des artistes, designers et poètes pour devenir un langage visuel à part entière.
+
+Notre approche repose sur le scroll vertical et parfois horizontal comme fil narratif : chaque mouvement de l’utilisateur fait apparaître textes, images, animations et interactions, permettant de raconter l’évolution de cette pratique, du XIXᵉ siècle à aujourd'hui. Le projet vise à créer une lecture fluide et poétique sur mobile, où l’œil et le geste du lecteur deviennent partie intégrante de l’expérience.
+
+Nous nous adressons à un public curieux, sensible à l’esthétique, à la narration et aux expériences interactives. La dimension tactile et nostalgique du projet dialogue avec les usages modernes du mobile, offrant un mélange de contemplation et d’apprentissage.
+
+Au-delà de l’histoire du Typewriter Art, ce projet questionne le potentiel créatif des outils les plus simples. Chaque frappe, chaque lettre, peut devenir image et poésie. Notre intention est de montrer que le design, l’écriture et l’art ne sont jamais séparés, ils se combinent plutôt pour produire une expérience sensorielle unique à la fois informative et immersive, fidèle à l’esprit rétro et poétique de notre média.
