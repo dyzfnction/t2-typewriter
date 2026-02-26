@@ -287,8 +287,15 @@ body { /* Cible le corps de la page */
 
 @media (min-width: 768px) {
 
+  .app-footer {
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  /* Tout à plat en une seule ligne */
   .touches {
     flex-direction: row;
+    flex-wrap: nowrap;
     gap: 0.75rem;
     align-items: flex-end;
   }
@@ -297,5 +304,6 @@ body { /* Cible le corps de la page */
   .groupe2,
   .groupe3 {
     flex-direction: row;
+    gap: 0.75rem;
   }
 }
