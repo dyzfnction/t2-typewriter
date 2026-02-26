@@ -27,7 +27,7 @@ export default function PageChargement({ onFinish }) {
 
   return (
     <div className={`loader ${exit ? 'is-exit' : ''}`}>
-      <img src="../images/logo-the-marginalian.png" className="logo-bounce" alt="" />
+      <img src="/t2-typewriter/images/logo-the-marginalian.png" className="logo-bounce" alt="" />
       <div className="shadow" />
       <div className="counter">{Math.floor(count)}%</div>
     </div>
