@@ -1,298 +1,541 @@
-*, /* Sélectionne tous les éléments */
-*::before, /* Sélectionne le pseudo-élément avant de chaque élément */
-*::after { /* Sélectionne le pseudo-élément après de chaque élément */
-  box-sizing: border-box; /* Inclut bordures et padding dans la taille totale */
-  margin: 0; /* Supprime toutes les marges par défaut */
-  padding: 0; /* Supprime tous les espacements internes par défaut */
+/* ── Reset & Base ───────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* inclut padding/border dans la taille */
+  margin: 0;
+  padding: 0;
 }
 
-html, /* Cible la balise html */
-body, /* Cible la balise body */
-#root { /* Cible l’élément avec l’id root */
-  width: 100%; /* Donne une largeur de 100% de l’écran */
+html,
+body,
+#root {
+  width: 100%;
 }
 
-body { /* Cible le corps de la page */
-  font-family: "Courier New", Courier, monospace; /* Définit la police en style machine à écrire */
-  background-color: #FFFBE8; /* Met un fond couleur crème clair */
-  color: #111; /* Définit la couleur du texte en presque noir */
-  text-align: left; /* Aligne le texte à gauche */
+body {
+  font-family: "Courier New", Courier, monospace; /* police machine à écrire */
+  background-color: #FFFBE8;                       /* fond crème */
+  color: #111;
+  text-align: left;
 }
 
-/* ── LOADER ─────────────────────────────────────────────────────────────────── */
+/* ── LOADER SOMBRE ──────────────────────────────────────────────────────────── */
 
-.loader { /* Conteneur principal du loader */
-  position: fixed; /* Reste fixe à l’écran */
-  inset: 0; /* Prend toute la surface */
-  background: #FFD400; /* Fond jaune */
-  display: flex; /* Active Flexbox */
-  flex-direction: column; /* Aligne en colonne */
-  justify-content: center; /* Centre verticalement */
-  align-items: center; /* Centre horizontalement */
-  z-index: 9999; /* Passe au-dessus de tout */
-  transition: opacity 0.8s ease; /* Animation de transparence */
+.loader-dark {                    /* plein écran, fond très sombre */
+  position: fixed;
+  inset: 0;
+  background: #080808;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  overflow: hidden;
+  transition: opacity 0.9s ease;
 }
 
-.loader.is-exit { /* État quand il disparaît */
-  opacity: 0; /* Devient invisible */
-  pointer-events: none; /* Désactive les interactions */
+.loader-dark.is-exit {            /* fade out */
+  opacity: 0;
+  pointer-events: none;
 }
 
-.logo-bounce { /* Logo qui rebondit */
-  width: 32px; /* Largeur */
-  height: 32px; /* Hauteur */
-  object-fit: contain; /* Garde les proportions */
-  display: block; /* Supprime l’espace inline */
-  animation: bounce 0.75s infinite; /* Animation en boucle */
-  transform-origin: center bottom; /* Point d’appui en bas */
+.loader-svg-top {                 /* SVG ligne haut */
+  position: absolute;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(400px, 90vw);
+  height: 20px;
 }
 
-.shadow { /* Ombre du logo */
-  width: 20px; /* Largeur */
-  height: 4px; /* Hauteur */
-  background: rgba(0, 0, 0, 0.3); /* Noir transparent */
-  border-radius: 2px; /* Coins arrondis */
-  margin: 6px 0 4px; /* Espacement */
-  animation: shadowBounce 0.75s infinite; /* Animation */
+.loader-svg-bottom {              /* SVG touches bas */
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(300px, 80vw);
+  height: 30px;
 }
 
-.counter { /* Texte du compteur */
-  font-size: 24px; /* Taille du texte */
-  font-weight: bold; /* Gras */
-  color: #000; /* Noir */
-  user-select: none; /* Non sélectionnable */
-  letter-spacing: 1px; /* Espace entre lettres */
+.loader-chars-bg {                /* nappe de caractères */
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 
-@keyframes bounce { /* Animation du rebond */
-  0% { /* Départ */
-    transform: translateY(0) scaleX(1.25) scaleY(0.75); /* Écrasé au sol */
-    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); /* Courbe de vitesse */
-  }
-  8% { /* Début montée */
-    transform: translateY(-8px) scaleX(0.85) scaleY(1.2); /* S’étire */
-    animation-timing-function: cubic-bezier(0.25, 0, 0.5, 1); /* Accélère */
-  }
-  45% { /* Point haut */
-    transform: translateY(-52px) scaleX(1) scaleY(1); /* Taille normale */
-    animation-timing-function: cubic-bezier(0.5, 0, 0.75, 1); /* Ralentit */
-  }
-  80% { /* Descente */
-    transform: translateY(-8px) scaleX(0.9) scaleY(1.1); /* Se réécrase */
-    animation-timing-function: cubic-bezier(0.55, 0, 0.2, 1); /* Accélère */
-  }
-  100% { /* Retour */
-    transform: translateY(0) scaleX(1.25) scaleY(0.75); /* État initial */
-  }
+.loader-char {                    /* caractère flottant */
+  position: absolute;
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 400;
+  line-height: 1;
+  animation: floatChar linear infinite;
+  user-select: none;
 }
 
-@keyframes shadowBounce { /* Animation de l’ombre */
-  0% { /* Début */
-    transform: scaleX(1.3); /* Ombre large */
-    opacity: 0.45; /* Plus visible */
-    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); /* Courbe */
-  }
-  45% { /* En l’air */
-    transform: scaleX(0.35); /* Ombre petite */
-    opacity: 0.1; /* Plus légère */
-    animation-timing-function: cubic-bezier(0.5, 0, 0.75, 1); /* Ralentit */
-  }
-  100% { /* Retour */
-    transform: scaleX(1.3); /* Ombre large */
-    opacity: 0.45; /* Visible */
-  }
+.loader-char--amber {             /* néon ambre */
+  color: #b8860b;
+  text-shadow: 0 0 8px rgba(184, 134, 11, 0.6), 0 0 20px rgba(184, 134, 11, 0.2);
 }
 
-/* ── STRUCTURE ──────────────────────────────────────────────────────────────── */
-
-.app-main { /* Conteneur principal de l’application */
-  min-height: 100vh; /* Prend au moins toute la hauteur de l’écran */
-  display: flex; /* Active Flexbox */
-  flex-direction: column; /* Aligne les éléments verticalement */
+.loader-char--green {             /* néon vert */
+  color: #2d6a2d;
+  text-shadow: 0 0 8px rgba(45, 106, 45, 0.5), 0 0 20px rgba(45, 106, 45, 0.15);
 }
 
-.app-header { /* Zone d’en-tête */
-  width: 100%; /* Prend toute la largeur */
-  padding: 2rem 2.5rem; /* Espacement interne */
-  display: flex; /* Utilise Flexbox */
-  justify-content: flex-start; /* Aligne à gauche horizontalement */
-  align-items: flex-start; /* Aligne en haut verticalement */
+@keyframes floatChar {            /* flottement doux */
+  0%   { transform: translateY(0px)   rotate(0deg); }
+  33%  { transform: translateY(-12px) rotate(1deg); }
+  66%  { transform: translateY(6px)   rotate(-1deg); }
+  100% { transform: translateY(0px)   rotate(0deg); }
 }
 
-.app-content { /* Zone de contenu principal */
-  flex: 1; /* Prend tout l’espace restant */
+.loader-center {                  /* zone centrale */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1;
 }
 
-/* ── TITRE ──────────────────────────────────────────────────────────────────── */
-
-.title-flag { /* Style du titre principal */
-  font-size: clamp(1.35rem, 4.2vw, 2rem); /* Taille responsive entre min et max */
-  font-weight: 800; /* Texte très gras */
-  letter-spacing: 0.15em; /* Espace entre les lettres */
-  text-transform: uppercase; /* Met le texte en majuscules */
-  color: #111; /* Couleur presque noire */
-  margin: 0; /* Supprime la marge par défaut */
-  text-align: left; /* Aligne à gauche */
-  line-height: 1.2; /* Hauteur de ligne */
-  font-family: 'Courier New', Courier, monospace; /* Police type machine à écrire */
-  min-height: 2.4em; /* Hauteur minimale pour éviter les sauts */
+.logo-bounce-dark {               /* logo rebondissant version sombre */
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: block;
+  filter: brightness(0) invert(1); /* blanc sur fond noir */
+  animation: bounce 0.75s infinite;
+  transform-origin: center bottom;
 }
 
-.title-flag strong { /* Partie en gras dans le titre */
-  font-weight: 800; /* Force le gras */
+.shadow-dark {                    /* ombre ambrée */
+  width: 22px;
+  height: 4px;
+  background: rgba(184, 134, 11, 0.35);
+  border-radius: 2px;
+  margin: 6px 0 10px;
+  animation: shadowBounce 0.75s infinite;
 }
+
+.counter-dark {                   /* compteur néon ambre */
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #b8860b;
+  text-shadow: 0 0 12px rgba(184, 134, 11, 0.5);
+  letter-spacing: 0.08em;
+  user-select: none;
+}
+
+.counter-pct {                    /* % plus petit */
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+@keyframes bounce {
+  0%   { transform: translateY(0) scaleX(1.25) scaleY(0.75); animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  8%   { transform: translateY(-8px) scaleX(0.85) scaleY(1.2); animation-timing-function: cubic-bezier(0.25, 0, 0.5, 1); }
+  45%  { transform: translateY(-52px) scaleX(1) scaleY(1); animation-timing-function: cubic-bezier(0.5, 0, 0.75, 1); }
+  80%  { transform: translateY(-8px) scaleX(0.9) scaleY(1.1); animation-timing-function: cubic-bezier(0.55, 0, 0.2, 1); }
+  100% { transform: translateY(0) scaleX(1.25) scaleY(0.75); }
+}
+
+@keyframes shadowBounce {
+  0%   { transform: scaleX(1.3); opacity: 0.45; animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45); }
+  45%  { transform: scaleX(0.35); opacity: 0.1; animation-timing-function: cubic-bezier(0.5, 0, 0.75, 1); }
+  100% { transform: scaleX(1.3); opacity: 0.45; }
+}
+
+/* ── PAGE PRINCIPALE ────────────────────────────────────────────────────────── */
+
+.app-main {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  width: 100%;
+  padding: 2rem 2.5rem;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.app-content { flex: 1; }
+
+.title-flag {
+  font-size: clamp(1.35rem, 4.2vw, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #111;
+  margin: 0;
+  text-align: left;
+  line-height: 1.2;
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 2.4em;
+}
+
+.title-flag strong { font-weight: 800; }
 
 /* ── TOUCHES TYPEWRITER ─────────────────────────────────────────────────────── */
 
-.app-footer { /* Zone du bas de l’app */
-  padding: 2rem 1rem 2.5rem; /* Espacement interne */
-  display: flex; /* Active Flexbox */
-  justify-content: center; /* Centre horizontalement */
+.app-footer {
+  padding: 2rem 1rem 2.5rem;
+  display: flex;
+  justify-content: center;
 }
 
-.touches { /* Conteneur de toutes les touches */
-  display: flex; /* Flexbox */
-  flex-direction: column; /* Organisation en colonne */
-  gap: 0.75rem; /* Espace entre les rangées */
-}
+.touches { display: flex; flex-direction: column; gap: 0.75rem; }
 
 .groupe1,
 .groupe2,
-.groupe3 { /* Chaque rangée de touches */
-  display: flex; /* Flexbox */
-  gap: 0.75rem; /* Espace entre touches */
-  justify-content: center; /* Centre la rangée */
+.groupe3 { display: flex; gap: 0.75rem; justify-content: center; }
+
+.touche-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
 }
 
-.touche-wrap { /* Conteneur d’une touche */
-  display: flex; /* Flexbox */
-  flex-direction: column; /* Empile tige + bouton */
-  align-items: center; /* Centre horizontalement */
-  cursor: pointer; /* Curseur cliquable */
-  user-select: none; /* Empêche sélection */
+.touche-tige {
+  width: 10px;
+  height: 12px;
+  background: linear-gradient(90deg, #555 0%, #888 40%, #666 70%, #444 100%);
+  border-radius: 0 0 3px 3px;
+  box-shadow: 0 3px 4px rgba(0,0,0,0.45), 1px 0 0 #333, -1px 0 0 #333;
+  transition: height 70ms ease;
 }
 
-.touche-tige { /* Petite tige sous la touche */
-  width: 10px; /* Largeur */
-  height: 12px; /* Hauteur */
-  background: linear-gradient(90deg, #555 0%, #888 40%, #666 70%, #444 100%); /* Dégradé métal */
-  border-radius: 0 0 3px 3px; /* Coins arrondis en bas */
-  box-shadow: 0 3px 4px rgba(0,0,0,0.45), 1px 0 0 #333, -1px 0 0 #333; /* Ombre */
-  transition: height 70ms ease; /* Animation de hauteur */
-}
-
-.touche { /* Bouton principal */
-  width: 52px; /* Largeur */
-  height: 52px; /* Hauteur */
-  border-radius: 50%; /* Forme ronde */
-  position: relative; /* Permet positionnement interne */
-  transition: transform 70ms ease, box-shadow 70ms ease; /* Animation appui */
-  background: radial-gradient( /* Dégradé effet relief */
-    circle at 38% 32%,
-    #6a6a6a 0%,
-    #3a3a3a 35%,
-    #1c1c1c 65%,
-    #2a2a2a 100%
-  );
-  box-shadow: /* Ombres pour effet 3D */
-    0 0 0 2px #888,
-    0 0 0 3px #555,
-    0 6px 0 #2a2a2a,
-    0 7px 0 #1a1a1a,
-    0 8px 12px rgba(0,0,0,0.6),
-    0 3px 4px rgba(0,0,0,0.4),
+.touche {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  position: relative;
+  transition: transform 70ms ease, box-shadow 70ms ease;
+  background: radial-gradient(circle at 38% 32%, #6a6a6a 0%, #3a3a3a 35%, #1c1c1c 65%, #2a2a2a 100%);
+  box-shadow:
+    0 0 0 2px #888, 0 0 0 3px #555,
+    0 6px 0 #2a2a2a, 0 7px 0 #1a1a1a,
+    0 8px 12px rgba(0,0,0,0.6), 0 3px 4px rgba(0,0,0,0.4),
     inset 0 2px 4px rgba(255,255,255,0.15),
     inset 0 6px 14px rgba(0,0,0,0.5);
 }
 
-.touche::before { /* Reflet sur la touche */
-  content: ''; /* Élément décoratif */
-  position: absolute; /* Position libre */
-  width: 18px; /* Largeur */
-  height: 10px; /* Hauteur */
-  top: 9px; /* Position verticale */
-  left: 10px; /* Position horizontale */
-  border-radius: 50%; /* Forme ovale */
-  background: radial-gradient(ellipse, rgba(255,255,255,0.25) 0%, transparent 100%); /* Dégradé lumière */
-  transform: rotate(-30deg); /* Inclinaison */
-  pointer-events: none; /* Ignore la souris */
+.touche::before {
+  content: '';
+  position: absolute;
+  width: 18px; height: 10px;
+  top: 9px; left: 10px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.25) 0%, transparent 100%);
+  transform: rotate(-30deg);
+  pointer-events: none;
 }
 
-.touche span { /* Texte sur la touche */
-  position: absolute; /* Position interne */
-  inset: 0; /* Remplit la touche */
-  display: flex; /* Flexbox */
-  align-items: center; /* Centre verticalement */
-  justify-content: center; /* Centre horizontalement */
-  font-family: 'Courier New', Courier, monospace; /* Police */
-  font-size: 0.7rem; /* Taille */
-  font-weight: 700; /* Gras */
-  letter-spacing: 0.03em; /* Espacement lettres */
-  color: #d0d0c8; /* Couleur texte */
-  text-shadow: /* Relief du texte */
-    0 -1px 0 rgba(0,0,0,0.9),
-    0  1px 1px rgba(255,255,255,0.08);
+.touche span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #d0d0c8;
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 1px 1px rgba(255,255,255,0.08);
 }
 
-.touche-wrap:active .touche { /* Quand on appuie */
-  transform: translateY(5px); /* Descend la touche */
-  box-shadow: /* Ombres réduites */
-    0 0 0 2px #888,
-    0 0 0 3px #555,
-    0 1px 0 #2a2a2a,
-    0 2px 6px rgba(0,0,0,0.5),
+.touche-wrap:active .touche {
+  transform: translateY(5px);
+  box-shadow:
+    0 0 0 2px #888, 0 0 0 3px #555,
+    0 1px 0 #2a2a2a, 0 2px 6px rgba(0,0,0,0.5),
     inset 0 2px 4px rgba(255,255,255,0.10),
     inset 0 8px 18px rgba(0,0,0,0.7);
 }
 
-.touche-wrap:active .touche-tige { /* Tige compressée au clic */
-  height: 5px; /* Devient plus courte */
+.touche-wrap:active .touche-tige { height: 5px; }
+
+.touche-wrap:hover .touche {
+  background: radial-gradient(circle at 38% 32%, #7a7a7a 0%, #484848 35%, #282828 65%, #363636 100%);
 }
 
-.touche-wrap:hover .touche { /* Survol souris */
-  background: radial-gradient( /* Couleur plus claire */
-    circle at 38% 32%,
-    #7a7a7a 0%,
-    #484848 35%,
-    #282828 65%,
-    #363636 100%
-  );
-}
-
-.touche-wrap.active .touche { /* Touche active */
-  background: radial-gradient( /* Couleur dorée */
-    circle at 38% 32%,
-    #c8a020 0%,
-    #7a5c10 35%,
-    #3a2c08 65%,
-    #5a4210 100%
-  );
-  box-shadow: /* Ombres dorées */
-    0 0 0 2px #c8a040,
-    0 0 0 3px #8a6820,
-    0 6px 0 #2a2200,
-    0 7px 0 #1a1500,
-    0 8px 12px rgba(0,0,0,0.6),
-    0 3px 4px rgba(0,0,0,0.4),
+.touche-wrap.active .touche {
+  background: radial-gradient(circle at 38% 32%, #c8a020 0%, #7a5c10 35%, #3a2c08 65%, #5a4210 100%);
+  box-shadow:
+    0 0 0 2px #c8a040, 0 0 0 3px #8a6820,
+    0 6px 0 #2a2200, 0 7px 0 #1a1500,
+    0 8px 12px rgba(0,0,0,0.6), 0 3px 4px rgba(0,0,0,0.4),
     inset 0 2px 4px rgba(255,220,80,0.2),
     inset 0 6px 14px rgba(0,0,0,0.5),
     0 0 14px rgba(200,160,30,0.25);
 }
 
-.touche-wrap.active .touche span { /* Texte quand actif */
-  color: #f0d060; /* Couleur dorée */
-  text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 0 8px rgba(220,180,40,0.5); /* Effet lumineux */
+.touche-wrap.active .touche span {
+  color: #f0d060;
+  text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 0 8px rgba(220,180,40,0.5);
 }
+
+/* ── SCROLL STORY ───────────────────────────────────────────────────────────── */
+
+.scroll-story {
+  background: #FFFBE8;
+  padding: 0 0 4rem;
+}
+
+.story-header {
+  padding: 3rem 2.5rem 1.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.story-header-svg {
+  display: block;
+  width: min(320px, 80vw);
+  height: 40px;
+  margin-bottom: 1rem;
+  color: #111;
+}
+
+.story-intro {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
+  letter-spacing: 0.1em;
+  color: #555;
+  text-transform: uppercase;
+}
+
+/* Section année */
+.year-section {
+  padding: 3rem 2.5rem 1.5rem;
+  border-left: 2px solid transparent;
+  position: relative;
+}
+
+.year-section--origin   { border-left-color: #8b7355; background: rgba(139,115,85,0.03); }
+.year-section--pioneer  { border-left-color: #6b8e6b; background: rgba(107,142,107,0.03); }
+.year-section--concrete { border-left-color: #4a6a8a; background: rgba(74,106,138,0.04); }
+.year-section--golden   { border-left-color: #b8860b; background: rgba(184,134,11,0.03); }
+.year-section--punk     { border-left-color: #8b1a1a; background: rgba(139,26,26,0.04); } /* rouge punk */
+.year-section--modern   { border-left-color: #3a3a5c; background: rgba(58,58,92,0.03); }
+
+.year-header { margin-bottom: 2rem; }
+
+.year-svg-line {
+  display: block;
+  width: 200px;
+  height: 16px;
+  margin-bottom: 0.5rem;
+  color: #111;
+}
+
+.cursor-blink { animation: cursorBlink 1s step-end infinite; } /* clignotement curseur */
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 0.5; }
+  50%       { opacity: 0; }
+}
+
+.year-number {                    /* grand chiffre discret en fond */
+  font-size: clamp(2.5rem, 10vw, 5rem);
+  font-weight: 900;
+  line-height: 1;
+  color: #111;
+  opacity: 0.1;
+  font-family: 'Courier New', Courier, monospace;
+  user-select: none;
+  margin-bottom: -1.2rem;         /* superposé sous le titre */
+}
+
+.year-era {
+  font-size: clamp(1.1rem, 4vw, 1.6rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #111;
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 1.8em;
+  position: relative;
+  z-index: 1;
+}
+
+.year-note {
+  font-size: clamp(0.72rem, 2.2vw, 0.85rem);
+  color: #666;
+  letter-spacing: 0.06em;
+  margin-top: 0.3rem;
+  font-style: italic;
+  min-height: 1.4em;
+}
+
+/* Piste horizontale d'œuvres */
+.works-track {
+  display: flex;
+  gap: 1.5rem;
+  overflow-x: auto;               /* scroll horizontal */
+  padding-bottom: 1rem;
+  scroll-snap-type: x mandatory;  /* snap entre cartes */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.works-track::-webkit-scrollbar { display: none; }
+
+/* Carte d'une œuvre */
+.work-card {
+  flex: 0 0 min(280px, 80vw);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.work-img-wrap {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: #e8e4d8;
+  position: relative;
+}
+
+.work-img-placeholder {           /* shimmer pendant chargement */
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #e8e4d8 25%, #f0ece0 50%, #e8e4d8 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.work-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  filter: sepia(15%) contrast(1.05); /* légère teinte vintage */
+}
+
+.work-img--loaded { opacity: 1; }
+
+.work-info { padding: 0 0.25rem; }
+
+.work-title {
+  font-size: clamp(0.78rem, 2.5vw, 0.92rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #111;
+  font-family: 'Courier New', Courier, monospace;
+  min-height: 1.4em;
+  line-height: 1.3;
+}
+
+.work-artist {
+  font-size: clamp(0.7rem, 2vw, 0.8rem);
+  color: #555;
+  letter-spacing: 0.06em;
+  margin: 0.2rem 0 0.5rem;
+  font-style: italic;
+  min-height: 1.2em;
+}
+
+.work-desc {
+  font-size: clamp(0.68rem, 2vw, 0.78rem);
+  line-height: 1.65;
+  color: #444;
+  letter-spacing: 0.02em;
+}
+
+/* Séparateur chariot retour */
+.carriage-return {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0 0;
+  opacity: 0.25;
+  transition: opacity 0.6s ease;
+  color: #555;
+}
+
+.carriage-return--active { opacity: 0.6; }
+
+.carriage-line {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  position: relative;
+  overflow: hidden;
+}
+
+.carriage-return--active .carriage-line::after { /* trait animé qui glisse */
+  content: '';
+  position: absolute;
+  inset: -2px 0;
+  background: linear-gradient(90deg, transparent, currentColor 40%, transparent);
+  animation: carriageSlide 1.2s ease-out forwards;
+}
+
+@keyframes carriageSlide {        /* chariot revient de droite à gauche */
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.carriage-label {
+  font-size: 0.9rem;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.carriage-arrow {
+  width: 40px;
+  height: 20px;
+  color: currentColor;
+  flex-shrink: 0;
+}
+
+/* Pied de frise */
+.story-footer {
+  padding: 2rem 2.5rem;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  margin-top: 2rem;
+}
+
+.story-footer-svg {
+  display: block;
+  width: 200px;
+  height: 20px;
+  margin-bottom: 1rem;
+  color: #666;
+}
+
+.story-source {
+  font-size: 0.72rem;
+  color: #888;
+  letter-spacing: 0.06em;
+  font-style: italic;
+  line-height: 1.8;
+}
+
 /* ── DESKTOP ────────────────────────────────────────────────────────────────── */
 
 @media (min-width: 768px) {
 
-  .app-footer {
-    justify-content: center;
-    align-items: flex-end;
+  .app-header { justify-content: center; }
+
+  .title-flag {
+    white-space: nowrap;
+    text-align: center;
+    min-height: auto;
   }
 
-  /* Tout à plat en une seule ligne */
   .touches {
     flex-direction: row;
     flex-wrap: nowrap;
@@ -302,8 +545,9 @@ body { /* Cible le corps de la page */
 
   .groupe1,
   .groupe2,
-  .groupe3 {
-    flex-direction: row;
-    gap: 0.75rem;
-  }
+  .groupe3 { flex-direction: row; gap: 0.75rem; }
+
+  .work-card { flex: 0 0 320px; } /* plus large sur desktop */
+
+  .year-section { padding: 3.5rem 4rem 2rem; }
 }
