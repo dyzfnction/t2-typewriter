@@ -19,44 +19,51 @@ export default function AppMain() {
   const cancelRef = useRef(false)
 
   useEffect(() => {
-    cancelRef.current = false
-    setNodes([])
+    cancelRef.current = true
 
-    const sleep = ms => new Promise(r => setTimeout(r, ms))
+    const timeout = setTimeout(() => {
+      cancelRef.current = false
+      setNodes([])
 
-    async function type() {
-      let id = 0
-      for (const seg of SEGMENTS) {
-        if (cancelRef.current) return
-        if (seg.br) {
-          await sleep(RETURN_PAUSE)
+      const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+      async function type() {
+        let id = 0
+        for (const seg of SEGMENTS) {
           if (cancelRef.current) return
-          setNodes(n => [...n, { id: id++, type: 'br' }])
-          continue
-        }
-        if (seg.strong) {
-          const nodeId = id++
-          setNodes(n => [...n, { id: nodeId, type: 'strong', content: '' }])
-          for (const char of seg.text) {
+          if (seg.br) {
+            await sleep(RETURN_PAUSE)
             if (cancelRef.current) return
-            setNodes(n => n.map(node =>
-              node.id === nodeId ? { ...node, content: node.content + char } : node
-            ))
-            await sleep(Math.max(STRONG_DELAY + (Math.random() - 0.5) * JITTER, 20))
+            setNodes(n => [...n, { id: id++, type: 'br' }])
+            continue
           }
-        } else {
-          for (const char of seg.text) {
-            if (cancelRef.current) return
-            setNodes(n => [...n, { id: id++, type: 'text', content: char }])
-            await sleep(Math.max(CHAR_DELAY + (Math.random() - 0.5) * JITTER, 20))
+          if (seg.strong) {
+            const nodeId = id++
+            setNodes(n => [...n, { id: nodeId, type: 'strong', content: '' }])
+            for (const char of seg.text) {
+              if (cancelRef.current) return
+              setNodes(n => n.map(node =>
+                node.id === nodeId ? { ...node, content: node.content + char } : node
+              ))
+              await sleep(Math.max(STRONG_DELAY + (Math.random() - 0.5) * JITTER, 20))
+            }
+          } else {
+            for (const char of seg.text) {
+              if (cancelRef.current) return
+              setNodes(n => [...n, { id: id++, type: 'text', content: char }])
+              await sleep(Math.max(CHAR_DELAY + (Math.random() - 0.5) * JITTER, 20))
+            }
           }
         }
       }
+
+      type()
+    }, 50)
+
+    return () => {
+      cancelRef.current = true
+      clearTimeout(timeout)
     }
-
-    type()
-
-    return () => { cancelRef.current = true }
   }, [])
 
   return (
