@@ -133,9 +133,10 @@ body {
 /* ── FEUILLE PAPIER VIEILLI ──────────────────────────────────────────────────── */
 
 .feuille {
-  width: min(700px, 82vw);
+  width: min(720px, 82vw);
   min-height: 200px;
   align-self: stretch;
+  max-height: 55vh;
   background:
     /* taches légères façon papier jauni */
     radial-gradient(ellipse at 20% 80%, rgba(160,120,60,0.07) 0%, transparent 50%),
