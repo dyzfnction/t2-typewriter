@@ -33,4 +33,4 @@ export default function PageChargement({ onFinish }) { // loader
       <div className="counter">{Math.floor(count)}%</div>
     </div>
   )
-}
+}/*euh*/
