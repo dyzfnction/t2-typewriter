@@ -120,7 +120,6 @@ body {
   align-items: flex-start;
 }
 
-/* FEUILLE — centrée, son bas touche le rectangle noir */
 .app-content {
   flex: 1;
   width: 100%;
@@ -130,22 +129,158 @@ body {
   min-height: 0;
 }
 
+/* ── FEUILLE PAPIER VIEILLI ──────────────────────────────────────────────────── */
+
 .sheet {
-  width: min(380px, 80vw);
+  width: min(420px, 82vw);
   height: 100%;
-  min-height: 300px;
-  background: #ffffff;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.10);
+  min-height: 480px;
+  background:
+    /* taches légères façon papier jauni */
+    radial-gradient(ellipse at 20% 80%, rgba(160,120,60,0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(140,110,50,0.06) 0%, transparent 45%),
+    radial-gradient(ellipse at 60% 60%, rgba(180,150,80,0.04) 0%, transparent 40%),
+    linear-gradient(160deg, #f7f0de 0%, #ede4c8 35%, #e8ddc0 70%, #ecddc4 100%);
+  box-shadow:
+    0 2px 30px rgba(0, 0, 0, 0.20),
+    inset 0 0 80px rgba(160, 120, 60, 0.06);
+  border-left: 1px solid rgba(160,130,80,0.18);
+  border-right: 1px solid rgba(160,130,80,0.18);
+  position: relative;
 }
 
-/* ── RECTANGLE NOIR — contient les touches ──────────────────────────────────── */
+/* ── MACHINE À ÉCRIRE ────────────────────────────────────────────────────────── */
 
 .keyboard-body {
   width: 100%;
-  background: #111009;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, #1c1c14 0%, #0e0e09 100%);
+  position: relative;
+}
+
+/* Barre de rouleau avec graduations */
+.typewriter-roller {
+  width: 100%;
+  height: 20px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 9px,
+      rgba(255,255,255,0.10) 9px,
+      rgba(255,255,255,0.10) 10px
+    ),
+    linear-gradient(180deg, #2e2e24 0%, #1e1e16 100%);
+  border-bottom: 2px solid #3a3a2c;
+  border-top: 1px solid #404038;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+/* Cylindres aux extrémités du rouleau */
+.typewriter-roller::before,
+.typewriter-roller::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a4a3e, #1a1a12);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.1);
+  border: 1px solid #505044;
+}
+.typewriter-roller::before { left: 12px; }
+.typewriter-roller::after  { right: 12px; }
+
+/* Ruban rouge */
+.typewriter-ribbon {
+  width: min(460px, 90vw);
+  height: 7px;
+  margin-top: 10px;
+  background: linear-gradient(90deg,
+    #700000 0%,
+    #cc1010 20%,
+    #ee1414 50%,
+    #cc1010 80%,
+    #700000 100%
+  );
+  border-radius: 1px;
+  box-shadow:
+    0 1px 5px rgba(0,0,0,0.7),
+    0 0 10px rgba(180,0,0,0.25);
+  position: relative;
+  z-index: 2;
+}
+
+/* Guide du ruban (petit triangle métal au centre) */
+.typewriter-ribbon::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid #3a3a2c;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+/* Arc de frappe (demi-cercle avec tiges) */
+.typewriter-mechanism {
+  width: min(440px, 88vw);
+  height: 56px;
+  margin-top: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Corps de l'arc */
+.typewriter-mechanism::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 108%;
+  height: 200%;
+  border-radius: 50% 50% 0 0;
+  background: linear-gradient(170deg, #2c2c24 0%, #1c1c14 40%, #141410 100%);
+  border-top: 2px solid #3e3e32;
+  box-shadow: inset 0 6px 16px rgba(0,0,0,0.6);
+}
+
+/* Tiges de frappe rayonnantes */
+.typewriter-mechanism::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 84%;
+  height: 188%;
+  background: repeating-conic-gradient(
+    from -52deg at 50% 100%,
+    transparent 0deg,
+    transparent 3.2deg,
+    rgba(90, 88, 68, 0.65) 3.2deg,
+    rgba(90, 88, 68, 0.65) 3.8deg
+  );
+  border-radius: 50% 50% 0 0;
+}
+
+/* Zone des touches */
+.touches-zone {
+  width: 100%;
   display: flex;
   justify-content: center;
-  padding: 1.4rem 1rem 1.8rem;
+  padding: 0.7rem 1rem 1.8rem;
+  background: linear-gradient(180deg, #131310 0%, #0a0a07 100%);
 }
 
 /* ── TITRE ──────────────────────────────────────────────────────────────────── */

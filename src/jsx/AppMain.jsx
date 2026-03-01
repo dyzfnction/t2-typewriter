@@ -83,33 +83,48 @@ export default function AppMain() {
         <div className="sheet"></div>
       </main>
 
+      {/* Corps machine à écrire */}
       <div className="keyboard-body">
-        <div className="touches">
-          <div className="groupe1">
-            {['I','II','III','IV'].map(label => (
-              <div className="touche-wrap" key={label}>
-                <div className="touche"><span>{label}</span></div>
-                <div className="touche-tige" />
-              </div>
-            ))}
-          </div>
-          <div className="groupe2">
-            {['V','VI','VII','VIII','IX'].map(label => (
-              <div className="touche-wrap" key={label}>
-                <div className="touche"><span>{label}</span></div>
-                <div className="touche-tige" />
-              </div>
-            ))}
-          </div>
-          <div className="groupe3">
-            {['X','XI','XII','XIII'].map(label => (
-              <div className="touche-wrap" key={label}>
-                <div className="touche"><span>{label}</span></div>
-                <div className="touche-tige" />
-              </div>
-            ))}
+
+        {/* Barre de rouleau avec graduations */}
+        <div className="typewriter-roller" />
+
+        {/* Ruban rouge */}
+        <div className="typewriter-ribbon" />
+
+        {/* Arc de frappe avec tiges rayonnantes */}
+        <div className="typewriter-mechanism" />
+
+        {/* Touches */}
+        <div className="touches-zone">
+          <div className="touches">
+            <div className="groupe1">
+              {['I','II','III','IV'].map(label => (
+                <div className="touche-wrap" key={label}>
+                  <div className="touche"><span>{label}</span></div>
+                  <div className="touche-tige" />
+                </div>
+              ))}
+            </div>
+            <div className="groupe2">
+              {['V','VI','VII','VIII','IX'].map(label => (
+                <div className="touche-wrap" key={label}>
+                  <div className="touche"><span>{label}</span></div>
+                  <div className="touche-tige" />
+                </div>
+              ))}
+            </div>
+            <div className="groupe3">
+              {['X','XI','XII','XIII'].map(label => (
+                <div className="touche-wrap" key={label}>
+                  <div className="touche"><span>{label}</span></div>
+                  <div className="touche-tige" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+
       </div>
 
     </div>
