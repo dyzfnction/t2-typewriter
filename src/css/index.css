@@ -131,8 +131,8 @@ body {
 
 /* ── FEUILLE PAPIER VIEILLI ──────────────────────────────────────────────────── */
 
-.sheet {
-  width: min(420px, 82vw);
+.feuille {
+  width: min(720px, 82vw);
   height: 100%;
   min-height: 200px;
   background:

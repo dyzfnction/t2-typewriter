@@ -80,7 +80,7 @@ export default function AppMain() {
       </header>
 
       <main className="app-content">
-        <div className="sheet"></div>
+        <div className="feuille"></div>
       </main>
 
       {/* Corps machine à écrire */}
