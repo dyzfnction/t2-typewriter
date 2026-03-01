@@ -126,7 +126,7 @@ body {
   width: 100%;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: flex-end;
   min-height: 0;
 }
 
@@ -134,8 +134,8 @@ body {
 
 .feuille {
   width: min(720px, 82vw);
-  min-height: 400px;
-  height: 100%;
+  min-height: 200px;
+  align-self: stretch;
   background:
     /* taches légères façon papier jauni */
     radial-gradient(ellipse at 20% 80%, rgba(160,120,60,0.07) 0%, transparent 50%),
