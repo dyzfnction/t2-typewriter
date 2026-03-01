@@ -89,12 +89,6 @@ export default function AppMain() {
         {/* Barre de rouleau avec graduations */}
         <div className="typewriter-roller" />
 
-        {/* Ruban rouge */}
-        <div className="typewriter-ribbon" />
-
-        {/* Arc de frappe avec tiges rayonnantes */}
-        <div className="typewriter-mechanism" />
-
         {/* Touches */}
         <div className="touches-zone">
           <div className="touches">
