@@ -14,13 +14,11 @@ const JITTER       = 18
 const RETURN_PAUSE = 280
 const STRONG_DELAY = 48
 
-export default function AppMain({ loadingDone = false }) {
+export default function AppMain() {
   const [nodes, setNodes] = useState([])
   const cancelRef = useRef(false)
 
   useEffect(() => {
-    if (!loadingDone) return
-
     cancelRef.current = true
 
     const timeout = setTimeout(() => {
@@ -66,7 +64,7 @@ export default function AppMain({ loadingDone = false }) {
       cancelRef.current = true
       clearTimeout(timeout)
     }
-  }, [canType])
+  }, [])
 
   return (
     <div className="app-main">
