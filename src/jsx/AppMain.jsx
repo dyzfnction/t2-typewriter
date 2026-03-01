@@ -14,11 +14,12 @@ const JITTER       = 18
 const RETURN_PAUSE = 280
 const STRONG_DELAY = 48
 
-export default function AppMain() {
+export default function AppMain({ canStart }) {
   const [nodes, setNodes] = useState([])
   const cancelRef = useRef(false)
 
   useEffect(() => {
+    if (!canStart) return
     cancelRef.current = true
 
     const timeout = setTimeout(() => {
@@ -71,7 +72,7 @@ export default function AppMain() {
       cancelRef.current = true
       clearTimeout(timeout)
     }
-  }, [])
+  }, [canStart])
 
   return (
     <div className="app-main">

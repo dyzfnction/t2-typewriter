@@ -7,7 +7,7 @@ function App() {
 
   return (
     <>
-      <AppMain />
+      <AppMain canStart={loadingDone} />
       {!loadingDone && (
         <PageChargement onFinish={() => setLoadingDone(true)} />
       )}
