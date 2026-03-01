@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react' // hooks React
+import { useState, useEffect } from 'react'
+import logo from '../images/logo-the-marginalian.png'
 
 export default function PageChargement({ onFinish }) { // loader
   const [count, setCount] = useState(0) // compteur
@@ -27,7 +28,7 @@ export default function PageChargement({ onFinish }) { // loader
 
   return (
     <div className={`loader ${exit ? 'is-exit' : ''}`}>
-      <img src="/images/logo-the-marginalian.png" className="logo-bounce" alt="" />
+      <img src={logo} className="logo-bounce" alt="" />
       <div className="shadow" />
       <div className="counter">{Math.floor(count)}%</div>
     </div>
