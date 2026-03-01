@@ -109,6 +109,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  align-items: center;
 }
 
 .app-header {
@@ -119,8 +120,32 @@ body {
   align-items: flex-start;
 }
 
+/* FEUILLE — centrée, son bas touche le rectangle noir */
 .app-content {
   flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 0;
+}
+
+.sheet {
+  width: min(380px, 80vw);
+  height: 100%;
+  min-height: 300px;
+  background: #ffffff;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.10);
+}
+
+/* ── RECTANGLE NOIR — contient les touches ──────────────────────────────────── */
+
+.keyboard-body {
+  width: 100%;
+  background: #111009;
+  display: flex;
+  justify-content: center;
+  padding: 1.4rem 1rem 1.8rem;
 }
 
 /* ── TITRE ──────────────────────────────────────────────────────────────────── */
@@ -143,12 +168,6 @@ body {
 }
 
 /* ── TOUCHES TYPEWRITER ─────────────────────────────────────────────────────── */
-
-.app-footer {
-  padding: 2rem 1rem 2.5rem;
-  display: flex;
-  justify-content: center;
-}
 
 .touches {
   display: flex;
@@ -283,4 +302,3 @@ body {
   color: #f0d060;
   text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 0 8px rgba(220,180,40,0.5);
 }
-/*help*/

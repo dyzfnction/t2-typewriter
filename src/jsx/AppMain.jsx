@@ -80,39 +80,37 @@ export default function AppMain() {
       </header>
 
       <main className="app-content">
-        {/* futur contenu scrollytelling */}
+        <div className="sheet"></div>
       </main>
 
-      <footer className="app-footer">
-        <section>
-          <div className="touches">
-            <div className="groupe1">
-              {['I','II','III','IV'].map(label => (
-                <div className="touche-wrap" key={label}>
-                  <div className="touche"><span>{label}</span></div>
-                  <div className="touche-tige" />
-                </div>
-              ))}
-            </div>
-            <div className="groupe2">
-              {['V','VI','VII','VIII','IX'].map(label => (
-                <div className="touche-wrap" key={label}>
-                  <div className="touche"><span>{label}</span></div>
-                  <div className="touche-tige" />
-                </div>
-              ))}
-            </div>
-            <div className="groupe3">
-              {['X','XI','XII','XIII'].map(label => (
-                <div className="touche-wrap" key={label}>
-                  <div className="touche"><span>{label}</span></div>
-                  <div className="touche-tige" />
-                </div>
-              ))}
-            </div>
+      <div className="keyboard-body">
+        <div className="touches">
+          <div className="groupe1">
+            {['I','II','III','IV'].map(label => (
+              <div className="touche-wrap" key={label}>
+                <div className="touche"><span>{label}</span></div>
+                <div className="touche-tige" />
+              </div>
+            ))}
           </div>
-        </section>
-      </footer>
+          <div className="groupe2">
+            {['V','VI','VII','VIII','IX'].map(label => (
+              <div className="touche-wrap" key={label}>
+                <div className="touche"><span>{label}</span></div>
+                <div className="touche-tige" />
+              </div>
+            ))}
+          </div>
+          <div className="groupe3">
+            {['X','XI','XII','XIII'].map(label => (
+              <div className="touche-wrap" key={label}>
+                <div className="touche"><span>{label}</span></div>
+                <div className="touche-tige" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
     </div>
   )
