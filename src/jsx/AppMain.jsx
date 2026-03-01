@@ -27,6 +27,9 @@ export default function AppMain() {
 
       const sleep = ms => new Promise(r => setTimeout(r, ms))
 
+      let titleBuilt = ''
+      document.title = ''
+
       async function type() {
         let id = 0
         for (const seg of SEGMENTS) {
@@ -45,12 +48,16 @@ export default function AppMain() {
               setNodes(n => n.map(node =>
                 node.id === nodeId ? { ...node, content: node.content + char } : node
               ))
+              titleBuilt += char
+              document.title = titleBuilt
               await sleep(Math.max(STRONG_DELAY + (Math.random() - 0.5) * JITTER, 20))
             }
           } else {
             for (const char of seg.text) {
               if (cancelRef.current) return
               setNodes(n => [...n, { id: id++, type: 'text', content: char }])
+              titleBuilt += char
+              document.title = titleBuilt
               await sleep(Math.max(CHAR_DELAY + (Math.random() - 0.5) * JITTER, 20))
             }
           }
