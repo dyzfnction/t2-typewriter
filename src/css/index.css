@@ -103,29 +103,13 @@ body {
   }
 }
 
-/* ── STRUCTURE GLOBALE ──────────────────────────────────────────────────────── */
+/* ── STRUCTURE ──────────────────────────────────────────────────────────────── */
 
 .app-main {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
-}
-
-/* Chaque section = une "page" de scroll */
-.page {
-  width: 100%;
-  max-width: 430px;
-  margin: 0 auto;
-}
-
-/* ── PAGE 1 — MACHINE ───────────────────────────────────────────────────────── */
-
-.page-machine {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .app-header {
@@ -146,13 +130,14 @@ body {
   max-height: 20vh;
 }
 
-/* ── FEUILLE PAPIER ─────────────────────────────────────────────────────────── */
+/* ── FEUILLE PAPIER VIEILLI ──────────────────────────────────────────────────── */
 
 .sheet {
   width: min(420px, 82vw);
   height: 100%;
   min-height: 200px;
   background:
+    /* taches légères façon papier jauni */
     radial-gradient(ellipse at 20% 80%, rgba(160,120,60,0.07) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 20%, rgba(140,110,50,0.06) 0%, transparent 45%),
     radial-gradient(ellipse at 60% 60%, rgba(180,150,80,0.04) 0%, transparent 40%),
@@ -165,7 +150,7 @@ body {
   position: relative;
 }
 
-/* ── MACHINE À ÉCRIRE ───────────────────────────────────────────────────────── */
+/* ── MACHINE À ÉCRIRE ────────────────────────────────────────────────────────── */
 
 .keyboard-body {
   width: 100%;
@@ -176,6 +161,7 @@ body {
   position: relative;
 }
 
+/* Barre de rouleau avec graduations */
 .typewriter-roller {
   width: 100%;
   height: 20px;
@@ -194,6 +180,7 @@ body {
   position: relative;
 }
 
+/* Cylindres aux extrémités du rouleau */
 .typewriter-roller::before,
 .typewriter-roller::after {
   content: '';
@@ -210,6 +197,7 @@ body {
 .typewriter-roller::before { left: 12px; }
 .typewriter-roller::after  { right: 12px; }
 
+/* Zone des touches */
 .touches-zone {
   width: 100%;
   display: flex;
@@ -237,7 +225,7 @@ body {
   font-weight: 800;
 }
 
-/* ── TOUCHES ────────────────────────────────────────────────────────────────── */
+/* ── TOUCHES TYPEWRITER ─────────────────────────────────────────────────────── */
 
 .touches {
   display: flex;
@@ -371,354 +359,4 @@ body {
 .touche-wrap.active .touche span {
   color: #f0d060;
   text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 0 8px rgba(220,180,40,0.5);
-}
-
-/* ── MENU LANGUETTE ─────────────────────────────────────────────────────────── */
-
-.menu-languette {
-  position: fixed;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 1000;
-  width: 32px;
-  height: 72px;
-  background: linear-gradient(180deg, #2e2e24 0%, #1e1e16 100%);
-  border: none;
-  border-radius: 0 6px 6px 0;
-  border-right: 1px solid #505044;
-  border-top: 1px solid #404038;
-  border-bottom: 1px solid #404038;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 2px 0 8px rgba(0,0,0,0.4);
-  transition: width 0.2s;
-  font-size: 14px;
-  color: #d0d0c8;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.menu-languette:hover {
-  background: linear-gradient(180deg, #3a3a2c 0%, #2a2a1c 100%);
-}
-
-/* Panel menu style machine */
-.menu-panel {
-  position: fixed;
-  left: -200px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 999;
-  width: 200px;
-  background: linear-gradient(180deg, #1c1c14 0%, #0e0e09 100%);
-  border-radius: 0 10px 10px 0;
-  border-right: 1px solid #505044;
-  border-top: 1px solid #404038;
-  border-bottom: 1px solid #404038;
-  padding: 20px 16px 24px;
-  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 4px 0 20px rgba(0,0,0,0.5);
-}
-
-.menu-panel.open {
-  left: 0;
-}
-
-.menu-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 998;
-}
-
-.menu-section-title {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: rgba(208,208,200,0.45);
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.menu-key-row {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-
-/* Touches menu — même style que les touches machine */
-.menu-touche {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  cursor: pointer;
-  background: none;
-  border: none;
-  padding: 0;
-}
-
-.menu-touche-cap {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  position: relative;
-  background: radial-gradient(
-    circle at 38% 32%,
-    #6a6a6a 0%,
-    #3a3a3a 35%,
-    #1c1c1c 65%,
-    #2a2a2a 100%
-  );
-  box-shadow:
-    0 0 0 2px #888,
-    0 0 0 3px #555,
-    0 5px 0 #2a2a2a,
-    0 6px 0 #1a1a1a,
-    0 7px 10px rgba(0,0,0,0.6),
-    inset 0 2px 4px rgba(255,255,255,0.15),
-    inset 0 6px 14px rgba(0,0,0,0.5);
-  transition: transform 70ms ease, box-shadow 70ms ease;
-}
-
-.menu-touche-cap span {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: #d0d0c8;
-  text-shadow: 0 -1px 0 rgba(0,0,0,0.9);
-}
-
-.menu-touche-tige {
-  width: 9px;
-  height: 10px;
-  background: linear-gradient(90deg, #555 0%, #888 40%, #666 70%, #444 100%);
-  border-radius: 0 0 3px 3px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  transition: height 70ms ease;
-}
-
-.menu-touche:hover .menu-touche-cap {
-  background: radial-gradient(
-    circle at 38% 32%,
-    #7a7a7a 0%,
-    #484848 35%,
-    #282828 65%,
-    #363636 100%
-  );
-}
-
-.menu-touche:active .menu-touche-cap {
-  transform: translateY(4px);
-  box-shadow:
-    0 0 0 2px #888,
-    0 0 0 3px #555,
-    0 1px 0 #2a2a2a,
-    inset 0 2px 4px rgba(255,255,255,0.1),
-    inset 0 8px 18px rgba(0,0,0,0.7);
-}
-.menu-touche:active .menu-touche-tige {
-  height: 4px;
-}
-
-.menu-touche.active .menu-touche-cap {
-  background: radial-gradient(
-    circle at 38% 32%,
-    #c8a020 0%,
-    #7a5c10 35%,
-    #3a2c08 65%,
-    #5a4210 100%
-  );
-  box-shadow:
-    0 0 0 2px #c8a040,
-    0 0 0 3px #8a6820,
-    0 5px 0 #2a2200,
-    0 6px 0 #1a1500,
-    0 7px 10px rgba(0,0,0,0.6),
-    inset 0 2px 4px rgba(255,220,80,0.2),
-    inset 0 6px 14px rgba(0,0,0,0.5),
-    0 0 14px rgba(200,160,30,0.25);
-}
-.menu-touche.active .menu-touche-cap span {
-  color: #f0d060;
-  text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 0 8px rgba(220,180,40,0.5);
-}
-
-/* ── PAGE 2 — CONTINUATION + LIVRE ─────────────────────────────────────────── */
-
-.page-livre {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #FFFBE8;
-  position: relative;
-}
-
-/* Haut de page = suite du corps de la machine, sans les touches */
-.machine-continuation {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: linear-gradient(180deg, #1c1c14 0%, #0e0e09 100%);
-}
-
-.machine-continuation-body {
-  width: 100%;
-  height: 60px;
-  background: linear-gradient(180deg, #0e0e09 0%, #080804 100%);
-}
-
-/* Zone du livre — centrée verticalement dans le reste de la page */
-.book-stage {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 40px 32px 40px 20px;
-  position: relative;
-  /* Le livre est par-dessus le rectangle, donc on remonte avec margin négatif */
-  margin-top: -40px;
-}
-
-/* Dos du livre (partie gauche, fixe) */
-.book-back {
-  position: absolute;
-  right: 32px;
-  /* même largeur que book-cover, aligné derrière */
-  width: 130px;
-  height: 200px;
-  background: linear-gradient(135deg, #e8e0d0, #d5ccb8);
-  border-radius: 4px 0 0 4px;
-  box-shadow: inset -2px 0 6px rgba(0,0,0,0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.book-inner {
-  opacity: 0;
-  transition: opacity 0.5s ease 0.4s;
-  padding: 16px;
-  text-align: center;
-}
-.book-inner.visible { opacity: 1; }
-
-.book-inner-text {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 10px;
-  line-height: 1.8;
-  color: #444;
-}
-
-/* Couverture — posée à droite, s'ouvre comme un livre réel */
-.book-cover {
-  position: relative;
-  width: 130px;
-  height: 200px;
-  background: linear-gradient(160deg, #1c1c14 0%, #0e0e09 100%);
-  border-radius: 0 6px 6px 0;
-  box-shadow:
-    4px 4px 20px rgba(0,0,0,0.45),
-    inset -2px 0 6px rgba(255,255,255,0.05);
-  cursor: pointer;
-  transform-origin: left center;
-  transform-style: preserve-3d;
-  transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  z-index: 2;
-  /* Perspective portée par le parent */
-}
-
-.book-stage {
-  perspective: 1200px;
-}
-
-.book-cover.open {
-  transform: rotateY(-175deg);
-}
-
-.cover-line {
-  width: 50px;
-  height: 1px;
-  background: rgba(255,255,255,0.25);
-}
-
-.cover-title {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 11px;
-  color: rgba(255,255,255,0.8);
-  text-align: center;
-  letter-spacing: 1px;
-  line-height: 1.6;
-}
-
-.cover-hint {
-  position: absolute;
-  bottom: 10px;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 8px;
-  letter-spacing: 2px;
-  color: rgba(255,255,255,0.3);
-  text-transform: uppercase;
-}
-
-/* ── PAGE 3 — CITATION ──────────────────────────────────────────────────────── */
-
-.page-citation {
-  min-height: 50vh;
-  background: #0f0e0c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 28px;
-}
-
-.citation-wrap {
-  text-align: center;
-  position: relative;
-}
-
-/* Guillemets très grands */
-.guillemet {
-  font-family: 'Georgia', 'Times New Roman', serif;
-  font-size: 110px;
-  line-height: 0.6;
-  color: rgba(255,255,255,0.10);
-  display: block;
-  font-style: normal;
-  user-select: none;
-}
-
-.guillemet-open  { margin-bottom: 16px; }
-.guillemet-close { margin-top: 16px; }
-
-.citation-text {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 15px;
-  font-style: italic;
-  color: rgba(255,255,255,0.82);
-  line-height: 1.9;
-  letter-spacing: 0.3px;
-}
-
-.citation-author {
-  display: block;
-  margin-top: 14px;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 9px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.30);
 }
