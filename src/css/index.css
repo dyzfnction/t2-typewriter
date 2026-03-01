@@ -133,7 +133,7 @@ body {
 /* ── FEUILLE PAPIER VIEILLI ──────────────────────────────────────────────────── */
 
 .feuille {
-  width: min(720px, 82vw);
+  width: min(700px, 82vw);
   min-height: 200px;
   align-self: stretch;
   background:
