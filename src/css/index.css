@@ -410,7 +410,7 @@ body {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #4a4a3e, #1a1a12);
+  background: radial-gradient(circle at 35% 30%, #FFFBE8, #d2c892);
   box-shadow: 0 2px 6px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.1);
   border: 1px solid #505044;
   transition: left 0.15s linear;

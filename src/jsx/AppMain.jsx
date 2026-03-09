@@ -18,7 +18,7 @@ const ROWS = [
     { label: 'II',  key: 'II'  },
     { label: 'III', key: 'III' },
     { label: 'IV',  key: 'IV'  },
-    { label: '🌐', key: 'lang' },
+    { label: '', key: 'lang' },
   ],
   [
     { label: 'V',    key: 'V'    },
