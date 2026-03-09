@@ -17,6 +17,7 @@ body {
   background-color: #FFFBE8;
   color: #111;
   text-align: left;
+  font-size: 13px;
 }
 
 /* ── LOADER ─────────────────────────────────────────────────────────────────── */
@@ -106,109 +107,50 @@ body {
 /* ── STRUCTURE ──────────────────────────────────────────────────────────────── */
 
 .app-main {
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0;
+  overflow: hidden;
 }
 
 .app-header {
   width: 100%;
-  padding: 2rem 2.5rem 0.5rem;
+  flex: 1;
+  padding: 2rem 2.4rem 20px;
   display: flex;
   justify-content: flex-start;
   align-items: flex-start;
+  flex-shrink: 1;
+  max-height: calc(90vh - 160px);
 }
 
-.app-content {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: stretch;
-  min-height: 0;
-}
-
-/* ── FEUILLE PAPIER VIEILLI ──────────────────────────────────────────────────── */
-
-.feuille {
-  width: 595px;
-  height: 842px;
-  background:
-    /* taches légères façon papier jauni */
-    radial-gradient(ellipse at 20% 80%, rgba(160,120,60,0.07) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(140,110,50,0.06) 0%, transparent 45%),
-    radial-gradient(ellipse at 60% 60%, rgba(180,150,80,0.04) 0%, transparent 40%),
-    linear-gradient(160deg, #f7f0de 0%, #ede4c8 35%, #e8ddc0 70%, #ecddc4 100%);
-  box-shadow:
-    0 2px 30px rgba(0, 0, 0, 0.20),
-    inset 0 0 80px rgba(160, 120, 60, 0.06);
-  border-left: 1px solid rgba(160,130,80,0.18);
-  border-right: 1px solid rgba(160,130,80,0.18);
-  position: relative;
-}
-
-/* ── MACHINE À ÉCRIRE ────────────────────────────────────────────────────────── */
-
+/* Retire le grand rectangle noir derrière tout le clavier */
 .keyboard-body {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, #1c1c14 0%, #0e0e09 100%);
+  background: transparent;
   position: relative;
+  z-index: 300;
 }
 
-/* Barre de rouleau avec graduations */
-.typewriter-roller {
-  width: 100%;
-  height: 20px;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 9px,
-      rgba(255,255,255,0.10) 9px,
-      rgba(255,255,255,0.10) 10px
-    ),
-    linear-gradient(180deg, #2e2e24 0%, #1e1e16 100%);
-  border-bottom: 2px solid #3a3a2c;
-  border-top: 1px solid #404038;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  position: relative;
-}
-
-/* Cylindres aux extrémités du rouleau */
-.typewriter-roller::before,
-.typewriter-roller::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #4a4a3e, #1a1a12);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.1);
-  border: 1px solid #505044;
-}
-.typewriter-roller::before { left: 12px; }
-.typewriter-roller::after  { right: 12px; }
-
-/* Zone des touches */
+/* Retire le rectangle noir derrière les touches — padding haut réduit pour remonter */
 .touches-zone {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 0.7rem 1rem 1.4rem;
-  background: linear-gradient(180deg, #131310 0%, #0a0a07 100%);
+  padding: 0.4rem 1rem 1.5rem;
+  background: transparent;
 }
 
 /* ── TITRE ──────────────────────────────────────────────────────────────────── */
 
 .title-flag {
-  font-size: clamp(1.35rem, 4.2vw, 2rem);
+  font-size: clamp(1rem, 3.5vw, 1.5rem);
   font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -248,18 +190,20 @@ body {
   user-select: none;
 }
 
+/* Tige légèrement plus fine */
 .touche-tige {
-  width: 10px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
   background: linear-gradient(90deg, #555 0%, #888 40%, #666 70%, #444 100%);
   border-radius: 0 0 3px 3px;
-  box-shadow: 0 3px 4px rgba(0,0,0,0.45), 1px 0 0 #333, -1px 0 0 #333;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.45), 1px 0 0 #333, -1px 0 0 #333;
   transition: height 70ms ease;
 }
 
+/* Touches légèrement plus petites */
 .touche {
-  width: 52px;
-  height: 52px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   position: relative;
   transition: transform 70ms ease, box-shadow 70ms ease;
@@ -273,21 +217,21 @@ body {
   box-shadow:
     0 0 0 2px #888,
     0 0 0 3px #555,
-    0 6px 0 #2a2a2a,
-    0 7px 0 #1a1a1a,
-    0 8px 12px rgba(0,0,0,0.6),
+    0 5px 0 #2a2a2a,
+    0 6px 0 #1a1a1a,
+    0 7px 10px rgba(0,0,0,0.6),
     0 3px 4px rgba(0,0,0,0.4),
     inset 0 2px 4px rgba(255,255,255,0.15),
-    inset 0 6px 14px rgba(0,0,0,0.5);
+    inset 0 5px 12px rgba(0,0,0,0.5);
 }
 
 .touche::before {
   content: '';
   position: absolute;
-  width: 18px;
-  height: 10px;
-  top: 9px;
-  left: 10px;
+  width: 16px;
+  height: 9px;
+  top: 8px;
+  left: 9px;
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(255,255,255,0.25) 0%, transparent 100%);
   transform: rotate(-30deg);
@@ -301,7 +245,7 @@ body {
   align-items: center;
   justify-content: center;
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.03em;
   color: #d0d0c8;
@@ -311,7 +255,7 @@ body {
 }
 
 .touche-wrap:active .touche {
-  transform: translateY(5px);
+  transform: translateY(4px);
   box-shadow:
     0 0 0 2px #888,
     0 0 0 3px #555,
@@ -322,7 +266,7 @@ body {
 }
 
 .touche-wrap:active .touche-tige {
-  height: 5px;
+  height: 3px;
 }
 
 .touche-wrap:hover .touche {
@@ -358,4 +302,116 @@ body {
 .touche-wrap.active .touche span {
   color: #f0d060;
   text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 0 8px rgba(220,180,40,0.5);
+}
+
+/* ── SCROLL WRAPPER ─────────────────────────────────────────────────────────── */
+
+.app-scroll-wrapper {
+  position: relative;
+  height: 1500vh;
+}
+
+.app-main {
+  position: sticky !important;
+  top: 0;
+}
+
+/* Overlay noir */
+.app-fade-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── CONTENU NOIR ───────────────────────────────────────────────────────────── */
+
+.app-black-content {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  color: #FFFBE8;
+}
+
+.app-black-title {
+  position: absolute;
+  top: 3.5rem; left: 2.5rem; right: 2.5rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  color: #FFFBE8;
+  min-height: 1.5em;
+}
+
+.app-black-image {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-black-image-placeholder {
+  width: min(260px, 75vw);
+  aspect-ratio: 1;
+  background: #333;
+  border: 1px solid #555;
+}
+
+.app-black-sub {
+  position: absolute;
+  bottom: 5rem; left: 2.5rem; right: 2.5rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.85rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.8;
+  color: rgba(255, 251, 232, 0.75);
+  min-height: 1em;
+}
+
+/* is-menu toggle */
+.touche-wrap.is-menu .touche span {
+  font-size: 1rem;
+  color: #d0d0c8;
+}
+
+/* ── STICKY ROLLER ──────────────────────────────────────────────────────────── */
+
+.sticky-roller {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  z-index: 1000;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 9px,
+      rgba(255,255,255,0.10) 9px,
+      rgba(255,255,255,0.10) 10px
+    ),
+    linear-gradient(180deg, #2e2e24 0%, #1e1e16 100%);
+  border-top: 1px solid #404038;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.5);
+}
+
+.sticky-roller__ball {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a4a3e, #1a1a12);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.1);
+  border: 1px solid #505044;
+  transition: left 0.15s linear;
 }
