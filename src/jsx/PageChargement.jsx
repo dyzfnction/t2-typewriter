@@ -1,36 +1,35 @@
 import { useState, useEffect } from 'react'
 import logo from '../images/logo.png'
 
-export default function PageChargement({ onFinish }) { // loader
-  const [count, setCount] = useState(0) // compteur
-  const [exit, setExit] = useState(false) // état sortie
+const DURATION = 3000
+const TICK     = 40
+
+export default function PageChargement({ onFinish }) {
+  const [count,   setCount]   = useState(0)
+  const [exiting, setExiting] = useState(false)
 
   useEffect(() => {
-    const intervalTime = 40 // vitesse compteur
-    const duration = 4000 // durée totale
-    const increment = 100 / (duration / intervalTime) // incrément
-
-    const interval = setInterval(() => {
-      setCount(c => {
-        const next = c + increment
+    const increment = 100 / (DURATION / TICK)
+    const interval  = setInterval(() => {
+      setCount(prev => {
+        const next = prev + increment
         if (next >= 100) {
           clearInterval(interval)
-          setExit(true) // fade out
-          setTimeout(onFinish, 800) // fin loader
+          setExiting(true)
+          setTimeout(onFinish, 800)
           return 100
         }
         return next
       })
-    }, intervalTime)
-
+    }, TICK)
     return () => clearInterval(interval)
   }, [onFinish])
 
   return (
-    <div className={`loader ${exit ? 'is-exit' : ''}`}>
-      <img src={logo} className="logo-bounce" />
-      <div className="shadow" />
-      <div className="counter">{Math.floor(count)}%</div>
+    <div id="loader" className={exiting ? 'exit' : ''}>
+      <img src={logo} alt="logo" id="loader-logo" />
+      <div id="loader-shadow" />
+      <div id="loader-count">{Math.floor(count)}%</div>
     </div>
   )
 }

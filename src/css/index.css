@@ -1,54 +1,68 @@
-*,
-*::before,
-*::after {
+/* ─────────────────────────────────────────────────────────────────────────────
+   RESET & BASE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html,
-body,
-#root {
+:root {
+  --cream: #FFFBE8;
+  --black: #111;
+  --yellow: #FFD400;
+  --dark: #2a2a22;
+}
+
+html {
+  scroll-snap-type: y mandatory;
+}
+
+html, body, #root {
   width: 100%;
 }
 
 body {
-  font-family: "Courier New", Courier, monospace;
-  background-color: #FFFBE8;
-  color: #111;
-  text-align: left;
+  font-family: 'Courier New', Courier, monospace;
   font-size: 13px;
+  color: var(--black);
+  background: var(--cream);
+  overflow-x: hidden;
 }
 
-/* ── LOADER ─────────────────────────────────────────────────────────────────── */
 
-.loader {
+/* ─────────────────────────────────────────────────────────────────────────────
+   LOADER
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#loader {
   position: fixed;
   inset: 0;
-  background: #FFD400;
+  background: var(--yellow);
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 9999;
   transition: opacity 0.8s ease;
 }
 
-.loader.is-exit {
+#loader.exit {
   opacity: 0;
   pointer-events: none;
 }
 
-.logo-bounce {
+#loader-logo {
   width: 32px;
   height: 32px;
   object-fit: contain;
   display: block;
-  animation: bounce 0.75s infinite;
+  animation: logoBounce 0.75s infinite;
   transform-origin: center bottom;
 }
 
-.shadow {
+#loader-shadow {
   width: 20px;
   height: 4px;
   background: rgba(0, 0, 0, 0.3);
@@ -57,333 +71,267 @@ body {
   animation: shadowBounce 0.75s infinite;
 }
 
-.counter {
+#loader-count {
   font-size: 24px;
-  font-weight: bold;
-  color: #000;
-  user-select: none;
-  letter-spacing: 1px;
+  font-weight: 800;
 }
 
-@keyframes bounce {
-  0% {
-    transform: translateY(0) scaleX(1.25) scaleY(0.75);
-    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
-  }
-  8% {
-    transform: translateY(-8px) scaleX(0.85) scaleY(1.2);
-    animation-timing-function: cubic-bezier(0.25, 0, 0.5, 1);
-  }
-  45% {
-    transform: translateY(-52px) scaleX(1) scaleY(1);
-    animation-timing-function: cubic-bezier(0.5, 0, 0.75, 1);
-  }
-  80% {
-    transform: translateY(-8px) scaleX(0.9) scaleY(1.1);
-    animation-timing-function: cubic-bezier(0.55, 0, 0.2, 1);
-  }
-  100% {
-    transform: translateY(0) scaleX(1.25) scaleY(0.75);
-  }
+@keyframes logoBounce {
+  0%   { transform: translateY(0) scaleX(1.25) scaleY(0.75); animation-timing-function: cubic-bezier(0.55,0,1,0.45); }
+  8%   { transform: translateY(-8px) scaleX(0.85) scaleY(1.2); animation-timing-function: cubic-bezier(0.25,0,0.5,1); }
+  45%  { transform: translateY(-52px) scaleX(1) scaleY(1); animation-timing-function: cubic-bezier(0.5,0,0.75,1); }
+  80%  { transform: translateY(-8px) scaleX(0.9) scaleY(1.1); animation-timing-function: cubic-bezier(0.55,0,0.2,1); }
+  100% { transform: translateY(0) scaleX(1.25) scaleY(0.75); }
 }
 
 @keyframes shadowBounce {
-  0% {
-    transform: scaleX(1.3);
-    opacity: 0.45;
-    animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
-  }
-  45% {
-    transform: scaleX(0.35);
-    opacity: 0.1;
-    animation-timing-function: cubic-bezier(0.5, 0, 0.75, 1);
-  }
-  100% {
-    transform: scaleX(1.3);
-    opacity: 0.45;
-  }
+  0%, 100% { transform: scaleX(1.3); opacity: 0.45; }
+  45%       { transform: scaleX(0.35); opacity: 0.1; }
 }
 
-/* ── STRUCTURE ──────────────────────────────────────────────────────────────── */
 
-.app-main {
-  height: 100vh;
-  max-height: 100vh;
+/* ─────────────────────────────────────────────────────────────────────────────
+   SECTION 1 — ACCUEIL
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#s-accueil {
+  height: 100svh;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0;
-  overflow: hidden;
+  padding-bottom: 200px;
+  background: var(--cream);
 }
 
-.app-header {
-  width: 100%;
-  flex: 1;
-  padding: 2rem 2.4rem 20px;
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  flex-shrink: 1;
-  max-height: calc(90vh - 160px);
+.accueil-header {
+  padding: 2rem 1.6rem 0;
 }
 
-/* Retire le grand rectangle noir derrière tout le clavier */
-.keyboard-body {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: transparent;
-  position: relative;
-  z-index: 300;
-}
-
-/* Retire le rectangle noir derrière les touches — padding haut réduit pour remonter */
-.touches-zone {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  padding: 0.4rem 1rem 1.5rem;
-  background: transparent;
-}
-
-/* ── TITRE ──────────────────────────────────────────────────────────────────── */
-
-.title-flag {
-  font-size: clamp(1rem, 3.5vw, 1.5rem);
+#title-flag {
+  font-size: 1.2rem;
   font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #111;
-  margin: 0;
-  text-align: left;
-  line-height: 1.2;
-  font-family: 'Courier New', Courier, monospace;
-  min-height: 2.4em;
+  line-height: 1.35;
+  min-height: 2.6em;
 }
 
-.title-flag strong {
+#title-flag strong {
   font-weight: 800;
 }
 
-/* ── TOUCHES TYPEWRITER ─────────────────────────────────────────────────────── */
+.title-cursor {
+  display: inline-block;
+  animation: blink 0.8s step-end infinite;
+}
 
-.touches {
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SECTION 2 — MACHINE À ÉCRIRE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#s-machine-rail {
+  height: 500svh;
+  position: relative;
+  scroll-snap-align: start;
+}
+
+#s-machine-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  background: var(--black);
+  overflow: hidden;
+}
+
+.machine-text-zone {
+  position: absolute;
+  top: 2.8rem;
+  left: 2.2rem;
+  right: 2.2rem;
+  z-index: 2;
+}
+
+#machine-para {
+  font-size: clamp(1rem, 3vw, 1.45rem);
+  line-height: 1.85;
+  letter-spacing: 0.05em;
+  color: var(--cream);
+  font-weight: 400;
+}
+
+.machine-3d {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(320px, 70vw);
+  height: min(220px, 35svh);
+  border: 1px dashed rgba(255, 251, 232, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 251, 232, 0.15);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SECTION 3 — LIVRE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#s-livre-rail {
+  position: relative;
+  background: var(--dark);
+  scroll-snap-align: start;
+}
+
+#s-livre-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding-bottom: 200px;
+}
+
+.livre-quote {
+  font-size: 0.75rem;
+  line-height: 1.6;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  color: var(--cream);
+  opacity: 0.5;
+  text-align: center;
+  max-width: 34ch;
+}
+
+.livre-quote cite {
+  display: block;
+  margin-top: 0.35rem;
+  font-style: normal;
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  opacity: 0.5;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SECTION 4 — DATE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#s-date {
+  height: 100svh;
+  scroll-snap-align: start;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#date-ascii {
+  font-family: 'Courier New', monospace;
+  font-size: clamp(4px, 1.9vw, 12px);
+  line-height: 1.25;
+  white-space: pre;
+  color: #fff;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   KEYBOARD FIXE
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#keyboard-fixed {
+  position: fixed;
+  bottom: 34px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 500;
+}
+
+.keyboard {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  position: relative;
 }
 
-.groupe1,
-.groupe2,
-.groupe3 {
+.key-row {
   display: flex;
   gap: 0.75rem;
   justify-content: center;
 }
 
-.touche-wrap {
+.key-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
   user-select: none;
+  will-change: transform, opacity;
 }
 
-/* Tige légèrement plus fine */
-.touche-tige {
+.key-tige {
   width: 8px;
   height: 8px;
   background: linear-gradient(90deg, #555 0%, #888 40%, #666 70%, #444 100%);
   border-radius: 0 0 3px 3px;
-  box-shadow: 0 2px 3px rgba(0,0,0,0.45), 1px 0 0 #333, -1px 0 0 #333;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
   transition: height 70ms ease;
 }
 
-/* Touches légèrement plus petites */
-.touche {
+.key {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  position: relative;
-  transition: transform 70ms ease, box-shadow 70ms ease;
-  background: radial-gradient(
-    circle at 38% 32%,
-    #6a6a6a 0%,
-    #3a3a3a 35%,
-    #1c1c1c 65%,
-    #2a2a2a 100%
-  );
+  background: radial-gradient(circle at 38% 32%, #6a6a6a 0%, #3a3a3a 35%, #1c1c1c 65%, #2a2a2a 100%);
   box-shadow:
     0 0 0 2px #888,
     0 0 0 3px #555,
     0 5px 0 #2a2a2a,
     0 6px 0 #1a1a1a,
-    0 7px 10px rgba(0,0,0,0.6),
-    0 3px 4px rgba(0,0,0,0.4),
-    inset 0 2px 4px rgba(255,255,255,0.15),
-    inset 0 5px 12px rgba(0,0,0,0.5);
-}
-
-.touche::before {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 9px;
-  top: 8px;
-  left: 9px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, rgba(255,255,255,0.25) 0%, transparent 100%);
-  transform: rotate(-30deg);
-  pointer-events: none;
-}
-
-.touche span {
-  position: absolute;
-  inset: 0;
+    0 7px 10px rgba(0, 0, 0, 0.6),
+    inset 0 2px 4px rgba(255, 255, 255, 0.15),
+    inset 0 5px 12px rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Courier New', Courier, monospace;
+  transition: transform 70ms ease;
+}
+
+.key-wrap:active .key    { transform: translateY(4px); }
+.key-wrap:active .key-tige { height: 3px; }
+.key-wrap:hover  .key    { filter: brightness(1.15); }
+
+.key span {
+  color: #d0d0c8;
   font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
-  color: #d0d0c8;
-  text-shadow:
-    0 -1px 0 rgba(0,0,0,0.9),
-    0  1px 1px rgba(255,255,255,0.08);
-}
-
-.touche-wrap:active .touche {
-  transform: translateY(4px);
-  box-shadow:
-    0 0 0 2px #888,
-    0 0 0 3px #555,
-    0 1px 0 #2a2a2a,
-    0 2px 6px rgba(0,0,0,0.5),
-    inset 0 2px 4px rgba(255,255,255,0.10),
-    inset 0 8px 18px rgba(0,0,0,0.7);
-}
-
-.touche-wrap:active .touche-tige {
-  height: 3px;
-}
-
-.touche-wrap:hover .touche {
-  background: radial-gradient(
-    circle at 38% 32%,
-    #7a7a7a 0%,
-    #484848 35%,
-    #282828 65%,
-    #363636 100%
-  );
-}
-
-.touche-wrap.active .touche {
-  background: radial-gradient(
-    circle at 38% 32%,
-    #c8a020 0%,
-    #7a5c10 35%,
-    #3a2c08 65%,
-    #5a4210 100%
-  );
-  box-shadow:
-    0 0 0 2px #c8a040,
-    0 0 0 3px #8a6820,
-    0 6px 0 #2a2200,
-    0 7px 0 #1a1500,
-    0 8px 12px rgba(0,0,0,0.6),
-    0 3px 4px rgba(0,0,0,0.4),
-    inset 0 2px 4px rgba(255,220,80,0.2),
-    inset 0 6px 14px rgba(0,0,0,0.5),
-    0 0 14px rgba(200,160,30,0.25);
-}
-
-.touche-wrap.active .touche span {
-  color: #f0d060;
-  text-shadow: 0 -1px 0 rgba(0,0,0,0.9), 0 0 8px rgba(220,180,40,0.5);
-}
-
-/* ── SCROLL WRAPPER ─────────────────────────────────────────────────────────── */
-
-.app-scroll-wrapper {
-  position: relative;
-  height: 1500vh;
-}
-
-.app-main {
-  position: sticky !important;
-  top: 0;
-}
-
-/* Overlay noir */
-.app-fade-overlay {
-  position: absolute;
-  inset: 0;
-  background: #000;
+  font-family: inherit;
   pointer-events: none;
-  z-index: 10;
 }
 
-/* ── CONTENU NOIR ───────────────────────────────────────────────────────────── */
+.key-toggle { z-index: 10; }
+.key-toggle .key span { font-size: 1rem; }
 
-.app-black-content {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  pointer-events: none;
-  color: #FFFBE8;
-}
 
-.app-black-title {
-  position: absolute;
-  top: 3.5rem; left: 2.5rem; right: 2.5rem;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1.25;
-  color: #FFFBE8;
-  min-height: 1.5em;
-}
+/* ─────────────────────────────────────────────────────────────────────────────
+   STICKY ROLLER
+   ───────────────────────────────────────────────────────────────────────────── */
 
-.app-black-image {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app-black-image-placeholder {
-  width: min(260px, 75vw);
-  aspect-ratio: 1;
-  background: #333;
-  border: 1px solid #555;
-}
-
-.app-black-sub {
-  position: absolute;
-  bottom: 5rem; left: 2.5rem; right: 2.5rem;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.85rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  line-height: 1.8;
-  color: rgba(255, 251, 232, 0.75);
-  min-height: 1em;
-}
-
-/* is-menu toggle */
-.touche-wrap.is-menu .touche span {
-  font-size: 1rem;
-  color: #d0d0c8;
-}
-
-/* ── STICKY ROLLER ──────────────────────────────────────────────────────────── */
-
-.sticky-roller {
+#roller {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -391,19 +339,14 @@ body {
   height: 20px;
   z-index: 1000;
   background:
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 9px,
-      rgba(255,255,255,0.10) 9px,
-      rgba(255,255,255,0.10) 10px
-    ),
-    linear-gradient(180deg, #2e2e24 0%, #1e1e16 100%);
+    repeating-linear-gradient(90deg, transparent, transparent 9px, rgba(255,255,255,0.1) 9px, rgba(255,255,255,0.1) 10px),
+    linear-gradient(180deg, #2e2e24, #1e1e16);
   border-top: 1px solid #404038;
-  box-shadow: 0 -2px 6px rgba(0,0,0,0.5);
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
 }
 
-.sticky-roller__ball {
+#roller-ball {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -411,7 +354,7 @@ body {
   height: 24px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #FFFBE8, #d2c892);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.7), inset 0 1px 2px rgba(255,255,255,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
   border: 1px solid #505044;
-  transition: left 0.15s linear;
+  cursor: grab;
 }

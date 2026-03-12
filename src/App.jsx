@@ -1,22 +1,41 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PageChargement from './jsx/PageChargement'
-import AppMain from './jsx/AppMain'
-// import PageLivre from './jsx/PageLivre'
-import StickyRoller from './jsx/StickyRoller'
+import FrameAccueil  from './jsx/FrameAccueil'
+import FrameMachine  from './jsx/FrameMachine'
+import FrameLivre    from './jsx/FrameLivre'
+import FrameDate     from './jsx/FrameDate'
+import StickyRoller  from './jsx/StickyRoller'
+import Menu          from './jsx/Menu'
 
-function App() {
+export default function App() {
   const [loadingDone, setLoadingDone] = useState(false)
+
+  useEffect(() => { window.scrollTo(0, 0) }, [])
 
   return (
     <>
-      <AppMain canStart={loadingDone} />
-      {/* <PageLivre /> */}
+      {/* ── 1. ACCUEIL ── */}
+      <FrameAccueil canStart={loadingDone} />
+
+      {/* ── 2. MACHINE (rail scrollable + sticky) ── */}
+      <FrameMachine />
+
+      {/* ── 3. LIVRE (rail scrollable + sticky) ── */}
+      <FrameLivre />
+
+      {/* ── 4. DATE ── */}
+      <FrameDate />
+
+      {/* ── KEYBOARD fixe (commun à toutes les sections) ── */}
+      <div id="keyboard-fixed">
+        <Menu />
+      </div>
+
+      {/* ── ROLLER fixe ── */}
       <StickyRoller />
-      {!loadingDone && (
-        <PageChargement onFinish={() => setLoadingDone(true)} />
-      )}
+
+      {/* ── LOADER (par-dessus tout) ── */}
+      {!loadingDone && <PageChargement onFinish={() => setLoadingDone(true)} />}
     </>
   )
 }
-
-export default App
