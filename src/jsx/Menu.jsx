@@ -18,6 +18,14 @@ export default function Menu() {
   function snapOffsets() {
     const toggleEl = toggleRef.current
     if (!toggleEl) return {}
+
+    // Reset temporaire pour mesurer les vraies positions naturelles
+    Object.values(keyRefs.current).forEach(el => {
+      if (!el) return
+      el.style.transform = 'none'
+      el.style.opacity   = ''
+    })
+
     const tr  = toggleEl.getBoundingClientRect()
     const pcx = tr.left + tr.width / 2
     const pcy = tr.top  + tr.height / 2
@@ -36,9 +44,21 @@ export default function Menu() {
   function animateTo(toCollapsed) {
     if (animating.current) return
     animating.current = true
-    const offsets = snapOffsets()
-    const keys    = Object.keys(keyRefs.current)
-    const N       = keys.length
+    const offsets = snapOffsets()  // reset + mesure
+
+    // Si on collapse, les touches sont déjà à leur place naturelle (opacity 1, transform none)
+    // Si on expand, il faut les replacer au pivot avant d'animer
+    const keys = Object.keys(keyRefs.current)
+    if (!toCollapsed) {
+      keys.forEach(key => {
+        const el  = keyRefs.current[key]
+        const pos = offsets[key]
+        if (!el || !pos) return
+        el.style.transform = `translate(${pos.dx}px, ${pos.dy}px)`
+        el.style.opacity   = '0'
+      })
+    }
+    const N = keys.length
     const t0      = performance.now()
     const DUR     = 480
 

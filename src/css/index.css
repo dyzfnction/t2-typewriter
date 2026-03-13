@@ -101,14 +101,32 @@ body {
   flex-direction: column;
   padding-bottom: 200px;
   background: var(--cream);
+  position: relative;
+  overflow: hidden;
+}
+
+#accueil-bg-ascii {
+  position: absolute;
+  bottom: 25px;
+  left: 40%;
+  transform: translateX(-50%);
+  font-family: 'Courier New', monospace;
+  font-size: clamp(8px, 2.5vw, 18px);
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: pre;
+  color: #111;
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
 }
 
 .accueil-header {
-  padding: 2rem 1.6rem 0;
+  padding: 2.5rem 1.7rem 0;
 }
 
 #title-flag {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -244,6 +262,7 @@ body {
   line-height: 1.25;
   white-space: pre;
   color: #fff;
+  letter-spacing: 0.08em;
 }
 
 
@@ -253,7 +272,7 @@ body {
 
 #keyboard-fixed {
   position: fixed;
-  bottom: 34px;
+  bottom: 50px;
   left: 0;
   right: 0;
   display: flex;
