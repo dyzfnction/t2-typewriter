@@ -108,7 +108,7 @@ body {
   height: 100svh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 200px;
+  padding-bottom: 220px;
   background: var(--cream);
   position: relative;
   overflow: hidden;
@@ -228,7 +228,7 @@ body {
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding-bottom: 200px;
+  padding-bottom: 220px;
 }
 
 .livre-quote {
@@ -341,7 +341,7 @@ body {
   position: relative;
   z-index: 3;
   width: 100%;
-  padding: 55px 32px 0;
+  padding: 85px 32px 0;
   text-align: center;
 }
 
