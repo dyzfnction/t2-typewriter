@@ -14,8 +14,8 @@
   --yellow: #FFD400;
   --dark: #2a2a22;
 
-  --font-base:    0.8125rem;
-  --font-small:   0.75rem;
+  --font-base:    1rem;
+  --font-small:   0.875rem;
   --lh-base:      1.7;
   --lh-tight:     1.35;
   --ls-wide:      0.12em;
@@ -179,8 +179,8 @@ body {
 .machine-text-zone {
   position: absolute;
   top: 2.8rem;
-  left: 2.2rem;
-  right: 2.2rem;
+  left: 1.5rem;
+  right: 1.5rem;
   z-index: 2;
 }
 
@@ -191,7 +191,7 @@ body {
   color: var(--cream);
   font-weight: 400;
   max-width: var(--measure);
-  white-space: pre-line;
+  white-space: normal;
 }
 
 .machine-3d {
@@ -344,7 +344,7 @@ body {
   position: relative;
   z-index: 3;
   width: 100%;
-  padding: 85px 32px 0;
+  padding: 55px 32px 0;
   text-align: center;
 }
 
