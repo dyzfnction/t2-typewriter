@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 
 const TITLE_SEGMENTS = [
-  { text: 'A Visual History of Typewriter Art ' },
+  { text: 'A\u00A0Visual History of\u00A0Typewriter\u00A0Art\u00A0' },
   { br: true },
-  { text: 'from ' },
+  { text: 'from\u00A0' },
   { text: '1893', strong: true },
-  { text: ' to ' },
+  { text: '\u00A0to\u00A0' },
   { text: 'Today', strong: true },
 ]
 

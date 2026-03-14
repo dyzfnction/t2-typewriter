@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
 const PARAS = [
-  "La première machine à écrire pratique fut inventée par Charles Thurber et brevetée en 1843, mais elle ne fut jamais produite en série.",
-  "La machine à écrire, comme toute technologie, est passée de révolutionnaire à son apogée à un symbole sentimental d'obsolescence à notre époque.",
-  "Elle fonctionne simplement : on insère une feuille sur le cylindre derrière un ruban encreur. En appuyant sur une touche, une barre frappe le ruban pour imprimer le caractère sur le papier.",
-  "Le chariot avance ligne par ligne et, à la fin, il est ramené au départ tandis que le cylindre positionne le papier pour continuer l'écriture.",
+  "La première machine à\u00A0écrire pratique\nfut inventée par\u00A0Charles\u00A0Thurber\net brevetée en\u00A01843, mais elle ne\u00A0fut\njamais produite en\u00A0série.",
+  "La machine à\u00A0écrire est passée\nde\u00A0révolutionnaire à\u00A0son apogée à\u00A0symbole\nsentimental d'obsolescence à\u00A0notre époque.",
+  "Elle fonctionne simplement\u00A0:\non\u00A0insère une\u00A0feuille sur\u00A0le cylindre derrière\nun\u00A0ruban encreur. En\u00A0appuyant sur\u00A0une\u00A0touche,\nune\u00A0barre frappe le\u00A0ruban pour\u00A0imprimer\nle\u00A0caractère sur\u00A0le papier.",
+  "Le chariot avance ligne par\u00A0ligne et, à\u00A0la\u00A0fin,\nil\u00A0est ramené au\u00A0départ tandis que le\u00A0cylindre\npositionne le\u00A0papier pour\u00A0continuer l'écriture.",
 ]
 
 const TRANS = 0.08
@@ -14,12 +14,11 @@ function easeInOut(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2)
 
 export default function FrameMachine() {
   const railRef          = useRef(null)
-  const paraRef          = useRef(null)
   const renderedIdxRef   = useRef(-1)
   const targetCountRef   = useRef(0)
   const displayCountRef  = useRef(0)
   const rafMachineRef    = useRef(null)
-  const [paraText, setParaText]   = useState('')
+  const [paraText, setParaText]       = useState('')
   const [paraOpacity, setParaOpacity] = useState(1)
 
   function animateMachine(text) {
@@ -41,11 +40,11 @@ export default function FrameMachine() {
       if (!rail) return
       const railTop    = rail.getBoundingClientRect().top + window.scrollY
       const railHeight = rail.offsetHeight - window.innerHeight
-      const p        = clamp((window.scrollY - railTop) / railHeight, 0, 1)
-      const segSize  = 1 / PARAS.length
+      const p         = clamp((window.scrollY - railTop) / railHeight, 0, 1)
+      const segSize   = 1 / PARAS.length
       const paraIndex = clamp(Math.floor(p / segSize), 0, PARAS.length - 1)
-      const segProg  = (p - paraIndex * segSize) / segSize
-      const text     = PARAS[paraIndex]
+      const segProg   = (p - paraIndex * segSize) / segSize
+      const text      = PARAS[paraIndex]
 
       if (paraIndex !== renderedIdxRef.current) {
         if (rafMachineRef.current) { cancelAnimationFrame(rafMachineRef.current); rafMachineRef.current = null }
