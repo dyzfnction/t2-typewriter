@@ -36,7 +36,7 @@ body {
   font-size: var(--font-base);
   line-height: var(--lh-base);
   color: var(--black);
-  background: var(--cream);
+  background: var(--black);
   overflow-x: hidden;
 }
 
@@ -179,8 +179,8 @@ body {
 .machine-text-zone {
   position: absolute;
   top: 2.8rem;
-  left: 1.5rem;
-  right: 1.5rem;
+  left: 2.2rem;
+  right: 2.2rem;
   z-index: 2;
 }
 
@@ -191,7 +191,7 @@ body {
   color: var(--cream);
   font-weight: 400;
   max-width: var(--measure);
-  white-space: normal;
+  white-space: pre-line;
 }
 
 .machine-3d {
@@ -344,7 +344,7 @@ body {
   position: relative;
   z-index: 3;
   width: 100%;
-  padding: 55px 32px 0;
+  padding: 85px 32px 0;
   text-align: center;
 }
 
