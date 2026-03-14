@@ -24,11 +24,12 @@
 }
 
 html {
-  scroll-snap-type: y mandatory;
+  background: var(--black);
 }
 
 html, body, #root {
   width: 100%;
+  background: var(--black);
 }
 
 body {
@@ -105,7 +106,6 @@ body {
 
 #s-accueil {
   height: 100svh;
-  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   padding-bottom: 200px;
@@ -165,7 +165,6 @@ body {
 #s-machine-rail {
   height: 500svh;
   position: relative;
-  scroll-snap-align: start;
 }
 
 #s-machine-sticky {
@@ -218,7 +217,6 @@ body {
 #s-livre-rail {
   position: relative;
   background: var(--dark);
-  scroll-snap-align: start;
 }
 
 #s-livre-sticky {
@@ -284,7 +282,6 @@ body {
 #s-horizontal-rail {
   height: 200svh;
   position: relative;
-  scroll-snap-align: start;
 }
 
 #s-horizontal-sticky {
@@ -344,7 +341,7 @@ body {
   position: relative;
   z-index: 3;
   width: 100%;
-  padding: 85px 32px 0;
+  padding: 55px 32px 0;
   text-align: center;
 }
 
