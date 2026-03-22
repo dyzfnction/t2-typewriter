@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 
+// Titre sans <br> forcé — sur une seule ligne, wrap naturel du CSS
 const TITLE_SEGMENTS = [
-  { text: 'A\u00A0Visual History of\u00A0Typewriter\u00A0Art\u00A0' },
-  { br: true },
-  { text: 'from\u00A0' },
+  { text: 'A\u00A0Visual History of\u00A0Typewriter\u00A0Art from\u00A0' },
   { text: '1893', strong: true },
   { text: '\u00A0to\u00A0' },
   { text: 'Today', strong: true },
@@ -30,11 +29,6 @@ export default function FrameAccueil({ canStart }) {
         let id = 0
         for (const seg of TITLE_SEGMENTS) {
           if (cancelRef.current) return
-          if (seg.br) {
-            setNodes(n => [...n, { id: id++, type: 'br' }])
-            await sleep(260)
-            continue
-          }
           if (seg.strong) {
             const nodeId = id++
             setNodes(n => [...n, { id: nodeId, type: 'strong', content: '' }])
@@ -65,7 +59,6 @@ export default function FrameAccueil({ canStart }) {
       <header className="accueil-header">
         <h1 id="title-flag">
           {nodes.map(node => {
-            if (node.type === 'br')     return <br key={node.id} />
             if (node.type === 'strong') return <strong key={node.id}>{node.content}</strong>
             return <span key={node.id}>{node.content}</span>
           })}

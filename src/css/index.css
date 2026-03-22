@@ -33,7 +33,9 @@ html, body, #root {
 }
 
 body {
-  font-family: 'Courier New', Courier, monospace;
+  hyphens: none;
+  -webkit-hyphens: none;
+  font-family: 'Courier New', Courier, monospace; /* Courier New everywhere */
   font-size: var(--font-base);
   line-height: var(--lh-base);
   color: var(--black);
@@ -135,12 +137,12 @@ body {
 }
 
 #title-flag {
-  font-size: clamp(1.4rem, 5vw, 2.2rem);
+  font-size: clamp(1.6rem, 7vw, 2.8rem);
   font-weight: 800;
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
   line-height: var(--lh-tight);
-  max-width: 20ch;
+  max-width: 24ch;
 }
 
 #title-flag strong {
@@ -171,16 +173,17 @@ body {
   position: sticky;
   top: 0;
   height: 100svh;
-  background: var(--black);
+  background: #0a0704;
   overflow: hidden;
 }
 
 .machine-text-zone {
   position: absolute;
   top: 2.8rem;
-  left: 2.2rem;
-  right: 2.2rem;
+  left: 1.5rem;
+  right: 1.5rem;
   z-index: 2;
+  pointer-events: none;
 }
 
 #machine-para {
@@ -190,23 +193,13 @@ body {
   color: var(--cream);
   font-weight: 400;
   max-width: var(--measure);
-  white-space: pre-line;
+  white-space: normal;
 }
 
 .machine-3d {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(320px, 70vw);
-  height: min(220px, 35svh);
-  border: 1px dashed rgba(255, 251, 232, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 251, 232, 0.15);
-  font-size: var(--font-base);
-  letter-spacing: var(--ls-wide);
+  inset: 0;
+  background: #0a0704;
 }
 
 
@@ -226,9 +219,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   overflow: hidden;
-  padding-bottom: 220px;
+  padding-bottom: calc(25svh + 20px);
 }
 
 .livre-quote {
@@ -239,7 +232,7 @@ body {
   color: var(--cream);
   opacity: 0.5;
   text-align: center;
-  max-width: 28ch;
+  max-width: 36ch;
 }
 
 .livre-quote cite {
@@ -263,6 +256,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 #date-ascii {
@@ -272,6 +266,7 @@ body {
   white-space: pre;
   color: #fff;
   letter-spacing: 0.08em;
+  transform-origin: center center;
 }
 
 
@@ -279,19 +274,24 @@ body {
    SECTION 5 — RAIL HORIZONTAL (Date → Oeuvre)
    ───────────────────────────────────────────────────────────────────────────── */
 
-#s-horizontal-rail {
-  height: 200svh;
+#s-horizontal-rail,
+.s-horizontal-rail {
+  height: 300svh;
   position: relative;
+  background: #000;
 }
 
-#s-horizontal-sticky {
+#s-horizontal-sticky,
+.s-horizontal-sticky {
   position: sticky;
   top: 0;
   height: 100svh;
   overflow: hidden;
+  background: #000;
 }
 
-#s-horizontal-track {
+#s-horizontal-track,
+.s-horizontal-track {
   display: flex;
   width: 200vw;
   height: 100%;
@@ -302,85 +302,16 @@ body {
   width: 100vw;
   height: 100svh;
   flex-shrink: 0;
-}
-
-
-/* ─────────────────────────────────────────────────────────────────────────────
-   SECTION 5 — OEUVRE
-   ───────────────────────────────────────────────────────────────────────────── */
-
-#s-oeuvre {
-  width: 100%;
-  height: 100%;
-  background: #F0E8D0;
-  position: relative;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
-}
-
-.oeuvre-bg {
-  position: absolute;
-  inset: 0;
+  position: relative;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  overflow: hidden;
 }
 
-.oeuvre-bg img {
-  height: 115%;        /* ← height pas width */
-  width: auto;         /* ← width auto pour garder les proportions */
-  object-fit: contain; /* ← contain pas cover */
-  opacity: 0.45;
+/* Le panel date (premier enfant du track) passe par-dessus les oeuvres */
+.h-panel:first-child {
+  z-index: 2;
 }
 
-.oeuvre-header {
-  position: relative;
-  z-index: 3;
-  width: 100%;
-  padding: 85px 32px 0;
-  text-align: center;
-}
-
-.oeuvre-title-line {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #000;
-  white-space: nowrap;
-  min-height: 1.4em;
-  margin-top: 2px;
-}
-
-.oeuvre-title-line--italic {
-  font-style: italic;
-  margin-top: 0;
-}
-
-.oeuvre-page {
-  position: relative;
-  z-index: 3;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 20px 170px;
-}
-
-.oeuvre-artwork {
-  box-shadow: 0 8px 80px rgba(0, 0, 0, 0.8);
-}
-
-.oeuvre-artwork img {
-  display: block;
-  max-width: 300px;
-  max-height: 55svh;
-  width: auto;
-  height: auto;
-}
 
 /* ─────────────────────────────────────────────────────────────────────────────
    KEYBOARD FIXE
@@ -493,3 +424,252 @@ body {
   border: 1px solid #505044;
   cursor: grab;
 }
+
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   NOUVELLES ÈRES — EraRail date panels
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Panel date générique pour les nouvelles ères */
+.era-date-panel {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Stack vertical : date du haut + tiret + date du bas — comme les prototypes */
+.date-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  transform-origin: center center;
+}
+
+.date-ascii-line {
+  font-family: 'Courier New', monospace;
+  font-size: clamp(3px, 1.3vw, 9px);
+  line-height: 1.25;
+  white-space: pre;
+  color: #fff;
+  letter-spacing: 0.08em;
+}
+
+.date-ascii-dash {
+  font-family: 'Courier New', monospace;
+  font-size: clamp(3px, 1.3vw, 9px);
+  line-height: 1.0;
+  white-space: pre;
+  color: #fff;
+  letter-spacing: 0.08em;
+  margin: 0.2em 0;
+}
+
+/* Animation zoom date — déclenchée à l'entrée de chaque ère */
+@keyframes dateZoomIn {
+  0%   { transform: scale(0.55); opacity: 0; }
+  40%  { transform: scale(0.55); opacity: 0; }
+  75%  { transform: scale(1.07); opacity: 1; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes dateZoomOut {
+  0%   { transform: scale(1.6);  opacity: 0; }
+  30%  { transform: scale(1.6);  opacity: 1; }
+  100% { transform: scale(1);    opacity: 1; }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   SCROLL HINT
+   ───────────────────────────────────────────────────────────────────────────── */
+
+#scroll-hint {
+  position: fixed;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+#scroll-hint.visible { opacity: 1; }
+
+.hint-label {
+  color: var(--hint-color, rgba(255,251,232,0.8));
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+  transition: color 0.4s ease;
+}
+
+.hint-arrow {
+  color: var(--hint-color, rgba(255,251,232,0.8));
+  font-size: 22px;
+  font-weight: 700;
+  animation: hintBounce 1.2s ease-in-out infinite;
+  transition: color 0.4s ease;
+}
+
+@keyframes hintBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DATES — espacement
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.date-ascii-line {
+  margin-top: 1.2em;
+  margin-bottom: 1.2em;
+}
+
+.date-ascii-dash {
+  color: rgba(255,255,255,0.45);
+  margin: 0;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   OV2 — Layout oeuvre
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.ov2-panel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ov2-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.ov2-bg img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.12;
+}
+
+/* Header — flow normal, padding haut pour l'espace avec le bord */
+.ov2-header {
+  position: relative;
+  z-index: 10;
+  padding: 120px 28px 0;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ov2-title-italic {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 700;
+  color: #111;
+  hyphens: none;
+  -webkit-hyphens: none;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+}
+
+.ov2-title-sub {
+  font-family: 'Courier New', monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+  margin-top: 4px;
+  hyphens: none;
+  -webkit-hyphens: none;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+}
+
+/* Image — flow normal, 16px sous le header */
+.ov2-image {
+  position: relative;
+  z-index: 5;
+  margin-top: 60px;
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  transform: scale(0.85);
+  opacity: 0;
+  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity 0.45s ease;
+  cursor: pointer;
+}
+.ov2-image--visible {
+  transform: scale(1);
+  opacity: 1;
+}
+.ov2-image img {
+  display: block;
+  max-width: min(300px, 78vw);
+  max-height: 48svh;
+  width: auto;
+  height: auto;
+  box-shadow: 0 8px 60px rgba(0,0,0,0.5);
+}
+.ov2-artist-img {
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  transition: opacity 0.5s ease;
+}
+
+/* Description — absolue par-dessus, s'affiche quand image disparaît */
+.ov2-desc {
+  position: absolute;
+  top: 211px;
+  left: 0; right: 0; bottom: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: 1rem clamp(20px, 6vw, 32px) 120px;
+  gap: 1rem;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  overflow: hidden;
+}
+
+.ov2-para {
+  font-family: 'Courier New', monospace;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: #111;
+  hyphens: none;
+  -webkit-hyphens: none;
+  white-space: normal;
+  max-width: 100%;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.ov2-para strong { font-weight: 700; }
+.ov2-para em     { font-style: italic; }
