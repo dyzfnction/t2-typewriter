@@ -1,15 +1,38 @@
 import { useRef, useState } from 'react'
 
+// Mapping I–XIII → { era, oeuvre } selon ERA_DATA dans App.jsx
+// Ère 0 (1890): PitmansManual, FloraOeuvre, Bismarck, QueenVictoria
+// Ère 1 (1950): WhisperPiece, BeethovenToday, CarnivalPanel, Textum2, WordsLovely, OPiece
+// Ère 2 (1980): UnusualLovePoem
+// Ère 3 (2000): TypewrittenPortraits, LookingForward, PatternSeries, BarcelonaLove
+const KEY_NAV = {
+  'I':    { era: 0, oeuvre: 0 },
+  'II':   { era: 0, oeuvre: 1 },
+  'III':  { era: 0, oeuvre: 2 },
+  'IV':   { era: 0, oeuvre: 3 },
+  'V':    { era: 1, oeuvre: 0 },
+  'VI':   { era: 1, oeuvre: 1 },
+  'VII':  { era: 1, oeuvre: 2 },
+  'VIII': { era: 1, oeuvre: 3 },
+  'IX':   { era: 1, oeuvre: 4 },
+  'X':    { era: 1, oeuvre: 5 },
+  'XI':   { era: 2, oeuvre: 0 },
+  'XII':  { era: 3, oeuvre: 0 },
+  'XIII': { era: 3, oeuvre: 1 },
+  'XIV':  { era: 3, oeuvre: 2 },
+  'XV':   { era: 3, oeuvre: 3 },
+}
+
 const KEY_ROWS = [
   ['🖨', 'I', 'II', 'III', 'IV', '☰'],
-  ['V', 'VI', 'VII', 'VIII', 'IX'],
-  ['__TOGGLE__', 'X', 'XI', 'XII', 'XIII', 'B'],
+  ['V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'],
+  ['__TOGGLE__', 'XII', 'XIII', 'XIV', 'XV', 'B'],
 ]
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
 function easeInOut(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2 }
 
-export default function Menu() {
+export default function Menu({ navigateTo }) {
   const [collapsed, setCollapsed] = useState(false)
   const toggleRef  = useRef(null)
   const keyRefs    = useRef({})   // { label: DOMElement }
@@ -93,6 +116,17 @@ export default function Menu() {
     requestAnimationFrame(frame)
   }
 
+  function handleKeyClick(label) {
+    if (KEY_NAV[label]) {
+      const { era, oeuvre } = KEY_NAV[label]
+      navigateTo?.(era, oeuvre)
+    } else if (label === '🖨') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else if (label === 'B') {
+      window.history.back()
+    }
+  }
+
   function handleToggle() {
     if (!animating.current) animateTo(!collapsed)
   }
@@ -124,6 +158,7 @@ export default function Menu() {
                 className="key-wrap"
                 ref={el => { keyRefs.current[label] = el }}
                 style={{ willChange: 'transform, opacity' }}
+                onClick={() => handleKeyClick(label)}
               >
                 <div className="key"><span>{label}</span></div>
                 <div className="key-tige" />

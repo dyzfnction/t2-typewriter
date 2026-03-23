@@ -100,20 +100,18 @@ function DatePanel({ animated, zoomOut, children }) {
     const el = wrapRef.current
     if (!el) return
     if (!animated) {
-      // Panel hors champ ou pas encore vu — tout noir, invisible
       el.style.animation = 'none'
       el.style.opacity   = '0'
       return
     }
-    // Panel visible — joue l'animation zoom
     el.style.animation = 'none'
     el.style.opacity   = '0'
-    void el.offsetWidth  // force reflow
+    void el.offsetWidth
     const anim = zoomOut
-      ? 'dateZoomOut 0.7s cubic-bezier(0.25,0.46,0.45,0.94) both'
+      ? 'dateZoomOut 0.9s cubic-bezier(0.25,0.46,0.45,0.94) both'
       : 'dateZoomIn 0.65s cubic-bezier(0.34,1.56,0.64,1) both'
     el.style.animation = anim
-    el.style.opacity   = ''  // laisse l'animation gérer l'opacité
+    el.style.opacity   = ''
   }, [animated, zoomOut])
   return (
     <div className="era-date-panel">

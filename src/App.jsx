@@ -126,7 +126,7 @@ const ERA_DATA = [
   },
 ]
 
-function EraRail({ nextSectionRef }) {
+function EraRail({ nextSectionRef, onRegisterJump }) {
   // ── State React ─────────────────────────────────────────────────────────
   const [eraIdx,     setEraIdx]     = useState(0)
   const [dateAnim,   setDateAnim]   = useState(false)
@@ -398,6 +398,25 @@ function EraRail({ nextSectionRef }) {
     else stepBackward()
   }, [])
 
+  // ── Jump direct vers une oeuvre (depuis le Menu) ───────────────────────────
+  function jumpTo(targetEraIdx, oeuvreIdx) {
+    if (animating.current) return
+    const N          = ERA_DATA[targetEraIdx].oeuvres.length
+    const targetStep = 1 + oeuvreIdx * 2
+    initEra(targetEraIdx, targetStep)
+    // Applique immédiatement le bon translateX sans animation
+    if (trackRef.current) {
+      const panelIdx = Math.ceil(targetStep / 2)
+      trackRef.current.style.transform = `translateX(-${panelIdx * window.innerWidth}px)`
+    }
+    // Scroll vers le rail
+    if (containerRef.current) containerRef.current.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    onRegisterJump?.(jumpTo)
+  }, [])
+
   // ── Capture molette + blocage scroll natif quand EraRail est actif ───────
   useEffect(() => {
     let wheelBuf = 0
@@ -417,9 +436,15 @@ function EraRail({ nextSectionRef }) {
       let dy = e.deltaY
       if (e.deltaMode === 1) dy *= 24
       if (e.deltaMode === 2) dy *= window.innerHeight
-      // Accumule pour éviter les déclenchements multiples sur un seul geste
       if (wheelTmr) return
       if (Math.abs(dy) < 10) return
+      // Ère 0 + step 0 + scroll haut → scroll programmatique vers la section précédente
+      if (eraIdxRef.current === 0 && stepRef.current === 0 && dy < 0) {
+        isActive.current = false
+        window.scrollTo({ top: lockedY - window.innerHeight, behavior: 'smooth' })
+        wheelTmr = setTimeout(() => { wheelTmr = null }, 1000)
+        return
+      }
       advance(dy)
       wheelTmr = setTimeout(() => { wheelTmr = null }, 600)
     }
@@ -583,10 +608,11 @@ export default function App() {
   const machineRef  = useRef(null)
   const livreRef    = useRef(null)
   const afterEraRef = useRef(null)  // section après les ères (future section fin)
+  const eraJumpRef  = useRef(null)  // ref vers la fonction jumpTo d'EraRail
 
   useSectionLock(accueilRef, lock)
   useSectionLock(machineRef, lock)
-  useSectionLock(livreRef,   lock)
+  // livreRef : verrou géré en interne par FrameLivre (lockPage / unlockPage)
 
   useEffect(() => {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
@@ -608,12 +634,12 @@ export default function App() {
       </div>
 
       {/* Les 4 ères — EraRail gère tout en interne */}
-      <EraRail nextSectionRef={afterEraRef} />
+      <EraRail nextSectionRef={afterEraRef} onRegisterJump={fn => { eraJumpRef.current = fn }} />
 
       {/* Section placeholder après les ères */}
       <div ref={afterEraRef} style={{ height: '100svh', background: '#111' }} />
 
-      <div id="keyboard-fixed"><Menu /></div>
+      <div id="keyboard-fixed"><Menu navigateTo={(era, oeuvre) => eraJumpRef.current?.(era, oeuvre)} /></div>
       <StickyRoller />
       <ScrollHint />
       {!loadingDone && <PageChargement onFinish={() => setLoadingDone(true)} />}
