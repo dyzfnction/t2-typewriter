@@ -99,7 +99,6 @@ function renderNode(node) {
 function OeuvreLayout({ lines, p1, p2, totalChars, imageOeuvre, imageBg, progress, canStart, autoMode = false, bgColor = '#fafafa' }) {
   const [descStarted, setDescStarted] = useState(false)
   const [imgVisible,  setImgVisible]  = useState(false)
-  const [showArtist,  setShowArtist]  = useState(false)
   const prevCanStart = useRef(false)
 
   useEffect(() => {
@@ -130,7 +129,6 @@ function OeuvreLayout({ lines, p1, p2, totalChars, imageOeuvre, imageBg, progres
 
   const imgOpacity  = autoMode ? 1 : Math.max(0, 1 - (progress - 0.3) / 0.15)
   const descOpacity = autoMode ? 0 : Math.min(1, Math.max(0, (progress - 0.4) / 0.15))
-  const hasArtist = imageBg && imageOeuvre !== imageBg
 
   return (
     <div className="ov2-panel" style={{ background: bgColor }}>
@@ -146,12 +144,8 @@ function OeuvreLayout({ lines, p1, p2, totalChars, imageOeuvre, imageBg, progres
           <div
             className={`ov2-image${imgVisible ? ' ov2-image--visible' : ''}`}
             style={{ opacity: imgOpacity, pointerEvents: imgOpacity < 0.1 ? 'none' : 'auto' }}
-            onClick={() => hasArtist && setShowArtist(v => !v)}
           >
-            <img src={imageOeuvre} alt={lines[0]} style={{ opacity: showArtist ? 0 : 1, transition: 'opacity 0.5s ease' }} />
-            {hasArtist && (
-              <img src={imageBg} alt="portrait" className="ov2-artist-img" style={{ opacity: showArtist ? 1 : 0 }} />
-            )}
+            <img src={imageOeuvre} alt={lines[0]} />
           </div>
         )}
         <div className="ov2-desc" style={{ opacity: descOpacity, pointerEvents: descOpacity < 0.1 ? 'none' : 'auto' }}>

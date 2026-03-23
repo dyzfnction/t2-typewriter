@@ -98,24 +98,33 @@ function DatePanel({ animated, zoomOut, children }) {
   const wrapRef = useRef(null)
   useEffect(() => {
     const el = wrapRef.current
-    if (!el || !animated) return
+    if (!el) return
+    if (!animated) {
+      // Panel hors champ ou pas encore vu — tout noir, invisible
+      el.style.animation = 'none'
+      el.style.opacity   = '0'
+      return
+    }
+    // Panel visible — joue l'animation zoom
     el.style.animation = 'none'
-    void el.offsetWidth
+    el.style.opacity   = '0'
+    void el.offsetWidth  // force reflow
     const anim = zoomOut
       ? 'dateZoomOut 0.7s cubic-bezier(0.25,0.46,0.45,0.94) both'
       : 'dateZoomIn 0.65s cubic-bezier(0.34,1.56,0.64,1) both'
     el.style.animation = anim
+    el.style.opacity   = ''  // laisse l'animation gérer l'opacité
   }, [animated, zoomOut])
   return (
     <div className="era-date-panel">
-      <div ref={wrapRef} className="date-stack">{children}</div>
+      <div ref={wrapRef} className="date-stack" style={{ opacity: 0 }}>{children}</div>
     </div>
   )
 }
 
-export function FrameDate1890({ animated }) {
+export function FrameDate1890({ animated, zoomOut }) {
   return (
-    <DatePanel animated={animated}>
+    <DatePanel animated={animated} zoomOut={zoomOut}>
       <pre className="date-ascii-line">{A1890}</pre>
       <pre className="date-ascii-dash">{DASH}</pre>
       <pre className="date-ascii-line">{A1900}</pre>
@@ -123,9 +132,9 @@ export function FrameDate1890({ animated }) {
   )
 }
 
-export function FrameDate1950({ animated }) {
+export function FrameDate1950({ animated, zoomOut }) {
   return (
-    <DatePanel animated={animated}>
+    <DatePanel animated={animated} zoomOut={zoomOut}>
       <pre className="date-ascii-line">{A1950}</pre>
       <pre className="date-ascii-dash">{DASH}</pre>
       <pre className="date-ascii-line">{A1970}</pre>
@@ -133,17 +142,17 @@ export function FrameDate1950({ animated }) {
   )
 }
 
-export function FrameDate1980({ animated }) {
+export function FrameDate1980({ animated, zoomOut }) {
   return (
-    <DatePanel animated={animated}>
+    <DatePanel animated={animated} zoomOut={zoomOut}>
       <pre className="date-ascii-line">{A1980}</pre>
     </DatePanel>
   )
 }
 
-export function FrameDate2000({ animated }) {
+export function FrameDate2000({ animated, zoomOut }) {
   return (
-    <DatePanel animated={animated}>
+    <DatePanel animated={animated} zoomOut={zoomOut}>
       <pre className="date-ascii-line">{A2000}</pre>
       <pre className="date-ascii-dash">{DASH}</pre>
       <pre className="date-ascii-line">{A2012}</pre>

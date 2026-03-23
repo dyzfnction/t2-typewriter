@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import PageChargement from './jsx/PageChargement'
 import FrameAccueil  from './jsx/FrameAccueil'
 import FrameMachine  from './jsx/FrameMachine'
@@ -26,6 +26,13 @@ import {
 } from './jsx/NewOeuvres'
 
 import { FrameDate1890, FrameDate1950, FrameDate1980, FrameDate2000 } from './jsx/FrameDates'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2 }
+function easeOut(t)   { return 1 - Math.pow(1-t, 3) }
+function clamp(v,a,b) { return Math.max(a, Math.min(b, v)) }
 
 const LOCK_DURATION = 2000
 
@@ -62,235 +69,504 @@ function useSectionLock(ref, lock) {
   }, [])
 }
 
-function easeInOut(t) { return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t+2,2)/2 }
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
-
 // ─────────────────────────────────────────────────────────────────────────────
-// EraRail — calqué EXACTEMENT sur FloraRail
+// EraRail
 //
-// FloraRail avec 2 oeuvres (Flora, Bismarck) :
-//   track width = 300vw  (panel date + panel flora + panel bismarck)
-//   p 0.00→0.20 : slide date→Flora         (horizFlora    = p/0.20)
-//   p 0.20      : typewriter Flora démarre
-//   p 0.40→0.60 : slide vertical Flora
-//   p 0.60→0.80 : slide Flora→Bismarck     (horizBismarck = (p-0.60)/0.20)
-//                 + fondu croisé Flora→Bismarck
-//   p 0.80→1.00 : slide vertical Bismarck
+// S'intègre dans le flux normal du scroll (position: sticky).
+// Quand il est visible (intersection), il capture la molette et gère
+// lui-même la navigation horizontale + les transitions verticales entre ères.
 //
-// Généralisation à N oeuvres :
-//   Chaque oeuvre i occupe un segment de taille SEG = 1/N
-//   Slide horiz vers oeuvre i : p de i*SEG à i*SEG + SEG*0.20
-//   Typewriter oeuvre i       : p >= i*SEG + SEG*0.20
-//   Slide vertical oeuvre i   : p de i*SEG + SEG*0.40 à i*SEG + SEG*0.60
-//   Fondu croisé i→i+1        : p de i*SEG + SEG*0.60 à i*SEG + SEG*0.80
-//     (simultané avec slide horiz suivant, exactement comme FloraRail)
+// Architecture interne :
+//   vwrap (height: 200%) — wrapper vertical
+//     slot-current (top: 0,   height: 50%) — ère visible
+//       track — flex horizontal, translate en X selon progress
+//         panel date + panels oeuvres
+//     slot-next (top: 50%, height: 50%)  — ère en transit (vide sauf pendant animation)
 //
-// Fin de rail (identique à HorizontalRail runAutoSequence) :
-//   slide vertical remonte → swap date → chariot revient → scroll suivant
+// Transitions :
+//   Retour chariot avant  : progress→0 (600ms) puis vwrap 0%→-100% (350ms) → swap
+//   Retour chariot arrière: vwrap -100%→0% (350ms) + progress 1→0 auto (400+N*200ms)
 // ─────────────────────────────────────────────────────────────────────────────
-function EraRail({ id, nextRailRef, DatePanel, oeuvres }) {
-  const N   = oeuvres.length
-  const SEG = 1 / N
 
-  const railRef  = useRef(null)
-  const trackRef = useRef(null)
+const ERA_DATA = [
+  {
+    DatePanel: FrameDate1890,
+    oeuvres: [
+      { Component: PitmansManual },
+      { Component: FloraOeuvre   },
+      { Component: Bismarck      },
+      { Component: QueenVictoria },
+    ],
+  },
+  {
+    DatePanel: FrameDate1950,
+    oeuvres: [
+      { Component: WhisperPiece   },
+      { Component: BeethovenToday },
+      { Component: CarnivalPanel  },
+      { Component: Textum2        },
+      { Component: WordsLovely    },
+      { Component: OPiece         },
+    ],
+  },
+  {
+    DatePanel: FrameDate1980,
+    oeuvres: [
+      { Component: UnusualLovePoem },
+    ],
+  },
+  {
+    DatePanel: FrameDate2000,
+    oeuvres: [
+      { Component: TypewrittenPortraits },
+      { Component: LookingForward       },
+      { Component: PatternSeries        },
+      { Component: BarcelonaLove        },
+    ],
+  },
+]
 
-  // Date
-  const [dateAnimated,  setDateAnimated]  = useState(false)
-  const [dateZoomOut,   setDateZoomOut]   = useState(false)
-  const dateAnimatedRef = useRef(false)
+function EraRail({ nextSectionRef }) {
+  // ── State React ─────────────────────────────────────────────────────────
+  const [eraIdx,     setEraIdx]     = useState(0)
+  const [dateAnim,   setDateAnim]   = useState(false)
+  const [dateZoomOut,setDateZoomOut]= useState(false)
 
-  // Par oeuvre — floraProgress/bismarckProgress/floraOpacity/bismarckOpacity généralisés
-  const [progresses, setProgresses] = useState(Array(N).fill(0))
-  const [visibles,   setVisibles]   = useState(Array(N).fill(false))
-  const [autoMode,   setAutoMode]   = useState(false)
-  const visibleRefs   = useRef(Array(N).fill(false))
-  const phase3Visited = useRef(false)
-  const autoTriggered = useRef(false)
-  const autoRunning   = useRef(false)
+  // stepIndex : index global de l'étape courante dans l'ère
+  //   0          = panel date
+  //   1          = oeuvre 0, sous-étape image  (canStart=true,  progress=0)
+  //   2          = oeuvre 0, sous-étape texte  (canStart=true,  progress=1)
+  //   3          = oeuvre 1, sous-étape image
+  //   4          = oeuvre 1, sous-étape texte
+  //   ...
+  //   2*N+1      = dernier step → déclenche retour chariot
+  const [stepIndex,  setStepIndex]  = useState(0)
+  const [progresses, setProgresses] = useState([])
+  const [visibles,   setVisibles]   = useState([])
 
-  // Séquence de fin — identique à HorizontalRail
-  function runAutoSequence(track) {
-    if (autoRunning.current) return
-    autoRunning.current = true
+  // ── Refs ─────────────────────────────────────────────────────────────────
+  const eraIdxRef   = useRef(0)
+  const stepRef     = useRef(0)        // stepIndex synchrone
+  const animating   = useRef(false)
+  const stepping    = useRef(false)    // true pendant la transition entre steps
+  const isActive    = useRef(false)
 
-    setAutoMode(true)
-    // Bloque le scroll sans mouvement visible : preventDefault sur wheel/touchmove
-    function preventWheel(e) { e.preventDefault() }
-    function preventTouch(e) { e.preventDefault() }
-    window.addEventListener('wheel',     preventWheel, { passive: false })
-    window.addEventListener('touchmove', preventTouch, { passive: false })
+  const containerRef = useRef(null)
+  const vwrapRef     = useRef(null)
+  const trackRef     = useRef(null)
 
-    // 1. Slide vertical de la dernière oeuvre remonte (800ms)
-    const DUR_RETURN = 800
-    let t0 = null
-    function animateReturn(ts) {
-      if (!t0) t0 = ts
-      const t = Math.min(1, (ts - t0) / DUR_RETURN)
-      setProgresses(prev => { const n=[...prev]; n[N-1]=easeInOut(1-t); return n })
-      if (t < 1) { requestAnimationFrame(animateReturn); return }
-      setProgresses(prev => { const n=[...prev]; n[N-1]=0; return n })
-
-      setTimeout(() => {
-        // Chariot revient de -(N*vw) à 0 en 700ms
-        const DUR_CHARIOT = 700
-        const fromX = N * window.innerWidth
-        let t1 = null
-        function animateChariot(ts) {
-          if (!t1) t1 = ts
-          const t = Math.min(1, (ts - t1) / DUR_CHARIOT)
-          track.style.transform = `translateX(-${(1 - easeInOut(t)) * fromX}px)`
-          if (t < 1) { requestAnimationFrame(animateChariot); return }
-
-          track.style.transform = 'translateX(0px)'
-          window.removeEventListener('wheel',     preventWheel)
-          window.removeEventListener('touchmove', preventTouch)
-
-          const nextEl = nextRailRef?.current
-          if (nextEl) {
-            const top = nextEl.getBoundingClientRect().top + window.scrollY
-            window.scrollTo({ top, behavior: 'instant' })
-          }
-
-          // Zoom out de la date : la date est revenue, on rejoue l'animation
-          setDateZoomOut(true)
-          setDateAnimated(false)
-          requestAnimationFrame(() => {
-            setDateAnimated(true)
-            setTimeout(() => setDateZoomOut(false), 800)
-          })
-
-          setAutoMode(false)
-          phase3Visited.current = false
-          autoRunning.current   = false
-        }
-        requestAnimationFrame(animateChariot)
-      }, 500)
+  // ── Calcule les props des oeuvres depuis stepIndex ───────────────────────
+  function stateFromStep(step, N) {
+    // step 0 = date
+    // step 2i-1 = oeuvre i-1 image (progress=0)
+    // step 2i   = oeuvre i-1 texte (progress=1)
+    const newProg = Array(N).fill(0)
+    const newVis  = Array(N).fill(false)
+    for (let i = 0; i < N; i++) {
+      const imgStep = 1 + i * 2
+      const txtStep = 2 + i * 2
+      if (step >= imgStep) newVis[i]  = true
+      if (step >= txtStep) newProg[i] = 1
+      else if (step >= imgStep) newProg[i] = 0
     }
-    requestAnimationFrame(animateReturn)
+    return { newProg, newVis }
   }
 
-  useEffect(() => {
-    function onScroll() {
-      if (autoRunning.current) return
-      const rail  = railRef.current
-      const track = trackRef.current
-      if (!rail || !track) return
+  // ── Applique un step au track (translation horizontale) ──────────────────
+  function applyStep(step, N) {
+    if (!trackRef.current) return
+    // Chaque oeuvre occupe 1 panel. On slide d'un panel à la fois.
+    // step 0 = date (translateX 0)
+    // step 1,2 = oeuvre 0 (translateX 1*vw)
+    // step 3,4 = oeuvre 1 (translateX 2*vw)
+    const panelIdx = step === 0 ? 0 : Math.ceil(step / 2)
+    const tx = panelIdx * window.innerWidth
+    trackRef.current.style.transform = `translateX(-${tx}px)`
 
-      const railTop    = rail.getBoundingClientRect().top + window.scrollY
-      const railHeight = rail.offsetHeight - window.innerHeight
-      if (railHeight <= 0) return
-      const p = clamp((window.scrollY - railTop) / railHeight, 0, 1)
+    // Date visible seulement sur step 0
+    if (step > 0) setDateAnim(false)
+  }
 
-      // DATE_PAUSE : 5% réservés à la date, pas plus
-      const DATE_PAUSE = 0.05
-      const q = clamp((p - DATE_PAUSE) / (1 - DATE_PAUSE), 0, 1)
+  // ── Passe au step suivant avec animation de slide ────────────────────────
+  function goToStep(targetStep, N, onDone) {
+    if (stepping.current) return
+    stepping.current = true
 
-      // ── Reset au scroll arrière ──────────────────────────────────────────
-      if (p < 0.10 && autoTriggered.current) {
-        phase3Visited.current = false
-        autoTriggered.current = false
-        setAutoMode(false)
-        visibleRefs.current   = Array(N).fill(false)
-        setVisibles(Array(N).fill(false))
-        setProgresses(Array(N).fill(0))
-      }
+    const currentPanel = stepRef.current === 0 ? 0 : Math.ceil(stepRef.current / 2)
+    const targetPanel  = targetStep   === 0 ? 0 : Math.ceil(targetStep / 2)
+    const needsSlide   = targetPanel !== currentPanel
 
-      // ── Translation horizontale ─────────────────────────────────────────
-      // Calqué FloraRail : horizFlora + horizBismarck + ...
-      // Au scroll arrière q redescend → totalHoriz redescend → track revient
-      let totalHoriz = 0
-      for (let i = 0; i < N; i++) {
-        totalHoriz += clamp((q - i * SEG) / (SEG * 0.20), 0, 1)
-      }
-      track.style.transform = `translateX(-${totalHoriz * window.innerWidth}px)`
+    if (needsSlide) {
+      // Anime le slide horizontal
+      const fromX = currentPanel * window.innerWidth
+      const toX   = targetPanel  * window.innerWidth
+      const DUR   = 500
+      const t0    = performance.now()
+      ;(function animSlide(now) {
+        const t  = Math.min(1, (now - t0) / DUR)
+        const tx = fromX + (toX - fromX) * easeInOut(t)
+        if (trackRef.current) trackRef.current.style.transform = `translateX(-${tx}px)`
+        if (t < 1) { requestAnimationFrame(animSlide); return }
+        if (trackRef.current) trackRef.current.style.transform = `translateX(-${toX}px)`
+        stepping.current = false
+        onDone?.()
+      })(performance.now())
+    } else {
+      stepping.current = false
+      onDone?.()
+    }
+  }
 
-      // ── Typewriters (one-way) ───────────────────────────────────────────
-      for (let i = 0; i < N; i++) {
-        if (q >= i * SEG + SEG * 0.20 && !visibleRefs.current[i]) {
-          visibleRefs.current[i] = true
+  // ── Init d'une ère ───────────────────────────────────────────────────────
+  function initEra(idx, startStep) {
+    const N    = ERA_DATA[idx].oeuvres.length
+    const step = startStep ?? 0
+    eraIdxRef.current = idx
+    stepRef.current   = step
+
+    const { newProg, newVis } = stateFromStep(step, N)
+    setEraIdx(idx)
+    setStepIndex(step)
+    setProgresses(newProg)
+    setVisibles(newVis)
+
+    // Date
+    setDateAnim(false)
+    setDateZoomOut(true)
+    if (step === 0) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setDateAnim(true))
+      })
+    }
+  }
+
+  // ── Retour chariot AVANT (fin d'ère → ère suivante) ─────────────────────
+  function triggerReturnForward() {
+    if (animating.current) return
+    animating.current = true
+
+    const fromEra = eraIdxRef.current
+    const N       = ERA_DATA[fromEra].oeuvres.length
+    const isLast  = fromEra >= ERA_DATA.length - 1
+
+    // Phase 1 — slide retour vers le panel date (translateX → 0), 600ms
+    const fromX = N * window.innerWidth
+    const DUR1  = 600, t0 = performance.now()
+    ;(function animReturn(now) {
+      const t  = Math.min(1, (now - t0) / DUR1)
+      const tx = fromX * (1 - easeInOut(t))
+      if (trackRef.current) trackRef.current.style.transform = `translateX(-${tx}px)`
+      if (t < 1) { requestAnimationFrame(animReturn); return }
+      if (trackRef.current) trackRef.current.style.transform = 'translateX(0)'
+
+      if (isLast) {
+        animating.current = false
+        if (nextSectionRef?.current) {
+          nextSectionRef.current.scrollIntoView({ behavior: 'smooth' })
         }
+        return
       }
-      setVisibles(visibleRefs.current.map(v => v))
 
-      // ── Slides verticaux (bidirectionnels) ─────────────────────────────
-      // La dernière oeuvre (N-1) reste à 0 — runAutoSequence gère sa remontée
-      const newProgresses = Array(N).fill(0)
-      for (let i = 0; i < N - 1; i++) {
-        newProgresses[i] = easeInOut(
-          clamp((q - i * SEG - SEG * 0.40) / (SEG * 0.20), 0, 1)
-        )
+      // Phase 2 — saut de ligne vers le bas (vwrap 0 → -100svh), 350ms
+      const DUR2 = 350, t1 = performance.now()
+      const vwrap = vwrapRef.current
+      ;(function animJump(now) {
+        const t   = Math.min(1, (now - t1) / DUR2)
+        const pct = easeOut(t) * 100
+        if (vwrap) vwrap.style.transform = `translateY(-${pct}svh)`
+        if (t < 1) { requestAnimationFrame(animJump); return }
+
+        if (vwrap) vwrap.style.transform = 'translateY(0)'
+        initEra(fromEra + 1, 0)
+        animating.current = false
+      })(performance.now())
+    })(performance.now())
+  }
+
+  // ── Retour chariot ARRIÈRE (début d'ère → ère précédente) ───────────────
+  function triggerReturnBackward() {
+    if (animating.current) return
+    if (eraIdxRef.current === 0) return
+    animating.current = true
+
+    const prevIdx = eraIdxRef.current - 1
+    const N       = ERA_DATA[prevIdx].oeuvres.length
+
+    // Prépare l'ère précédente dans slot-current à progress=1 (dernier panel)
+    eraIdxRef.current = prevIdx
+    stepRef.current   = N * 2
+    const { newProg, newVis } = stateFromStep(N * 2, N)
+    setEraIdx(prevIdx)
+    setStepIndex(N * 2)
+    setProgresses(newProg)
+    setVisibles(newVis)
+    setDateAnim(false)
+
+    if (trackRef.current) trackRef.current.style.transform = `translateX(-${N * window.innerWidth}px)`
+    const vwrap = vwrapRef.current
+    if (vwrap) vwrap.style.transform = 'translateY(-100svh)'
+
+    requestAnimationFrame(() => {
+      // Phase 1 — saut de ligne vers le haut : -100svh → 0, 350ms
+      const DUR1 = 350, t0 = performance.now()
+      ;(function animJump(now) {
+        const t   = Math.min(1, (now - t0) / DUR1)
+        const pct = (1 - easeOut(t)) * 100
+        if (vwrap) vwrap.style.transform = `translateY(-${pct}svh)`
+        if (t < 1) { requestAnimationFrame(animJump); return }
+        if (vwrap) vwrap.style.transform = 'translateY(0)'
+
+        // Phase 2 — slide direct de la dernière oeuvre vers la date, 700ms
+        const fromX = N * window.innerWidth
+        const DUR2  = 700, t1 = performance.now()
+        ;(function animSlide(now) {
+          const t  = Math.min(1, (now - t1) / DUR2)
+          const tx = fromX * (1 - easeInOut(t))
+          if (trackRef.current) trackRef.current.style.transform = `translateX(-${tx}px)`
+          if (t < 1) { requestAnimationFrame(animSlide); return }
+          if (trackRef.current) trackRef.current.style.transform = 'translateX(0)'
+
+          // Arrivé sur la date
+          stepRef.current = 0
+          setStepIndex(0)
+          setProgresses(Array(N).fill(0))
+          setVisibles(Array(N).fill(false))
+          setDateAnim(false)
+          setDateZoomOut(true)
+          requestAnimationFrame(() => requestAnimationFrame(() => setDateAnim(true)))
+          animating.current = false
+        })(performance.now())
+      })(performance.now())
+    })
+  }
+
+  // ── Avancer d'un step (scroll vers l'avant) ─────────────────────────────
+  function stepForward() {
+    if (animating.current || stepping.current) return
+    const era  = ERA_DATA[eraIdxRef.current]
+    const N    = era.oeuvres.length
+    const maxStep = N * 2  // dernier step = texte dernière oeuvre
+    const next = stepRef.current + 1
+
+    if (next > maxStep) {
+      // Fin de l'ère → retour chariot
+      triggerReturnForward()
+      return
+    }
+
+    goToStep(next, N, () => {
+      stepRef.current = next
+      setStepIndex(next)
+      const { newProg, newVis } = stateFromStep(next, N)
+      setProgresses(newProg)
+      setVisibles(newVis)
+      if (next > 0) setDateAnim(false)
+    })
+  }
+
+  // ── Reculer d'un step (scroll vers l'arrière) ────────────────────────────
+  function stepBackward() {
+    if (animating.current || stepping.current) return
+    const era = ERA_DATA[eraIdxRef.current]
+    const N   = era.oeuvres.length
+    const prev = stepRef.current - 1
+
+    if (prev < 0) {
+      // Début de l'ère → ère précédente
+      triggerReturnBackward()
+      return
+    }
+
+    goToStep(prev, N, () => {
+      stepRef.current = prev
+      setStepIndex(prev)
+      const { newProg, newVis } = stateFromStep(prev, N)
+      setProgresses(newProg)
+      setVisibles(newVis)
+      if (prev === 0) {
+        setDateAnim(false)
+        setDateZoomOut(true)
+        requestAnimationFrame(() => requestAnimationFrame(() => setDateAnim(true)))
       }
-      newProgresses[N - 1] = 0
-      setProgresses(newProgresses)
+    })
+  }
 
-      // Pas de fondu entre panels — translation pure comme FloraRail
+  // ── Wrapper advance (détecte direction depuis delta) ─────────────────────
+  const advance = useCallback((delta) => {
+    if (Math.abs(delta) < 0.005) return
+    if (delta > 0) stepForward()
+    else stepBackward()
+  }, [])
 
-      // Phase 3
-      if (q >= (N - 1) * SEG + SEG * 0.40) phase3Visited.current = true
+  // ── Capture molette + blocage scroll natif quand EraRail est actif ───────
+  useEffect(() => {
+    let wheelBuf = 0
+    let wheelTmr = null
+    let lockedY   = 0
 
-      // Scroll lock à la dernière oeuvre : dès que p≥0.99 et que phase3 est atteinte,
-      // tout scroll supplémentaire déclenche immédiatement la séquence auto
-      if (p >= 0.95 && phase3Visited.current && !autoTriggered.current && !autoRunning.current && nextRailRef?.current) {
-        autoTriggered.current = true
-        runAutoSequence(track)
+    // Bloque le scroll natif de la page pendant que EraRail est actif
+    function preventScroll() {
+      if (!isActive.current) return
+      window.scrollTo(0, lockedY)
+    }
+
+    function onWheel(e) {
+      if (!isActive.current) return
+      e.preventDefault()
+      e.stopPropagation()
+      let dy = e.deltaY
+      if (e.deltaMode === 1) dy *= 24
+      if (e.deltaMode === 2) dy *= window.innerHeight
+      // Accumule pour éviter les déclenchements multiples sur un seul geste
+      if (wheelTmr) return
+      if (Math.abs(dy) < 10) return
+      advance(dy)
+      wheelTmr = setTimeout(() => { wheelTmr = null }, 600)
+    }
+
+    let touchY = 0
+    let touchBuf = 0
+    function onTouchStart(e) {
+      if (!isActive.current) return
+      touchY   = e.touches[0].clientY
+      touchBuf = 0
+    }
+    function onTouchMove(e) {
+      if (!isActive.current) return
+      e.preventDefault()
+      const dy = touchY - e.touches[0].clientY
+      touchY   = e.touches[0].clientY
+      touchBuf += dy
+      if (Math.abs(touchBuf) > 50) {
+        advance(touchBuf)
+        touchBuf = 0
       }
     }
 
-    window.addEventListener('scroll', onScroll, { passive: true })
-    onScroll()
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+    window.addEventListener('scroll',     preventScroll, { passive: false })
+    window.addEventListener('wheel',      onWheel,       { passive: false })
+    window.addEventListener('touchstart', onTouchStart,  { passive: true  })
+    window.addEventListener('touchmove',  onTouchMove,   { passive: false })
 
-  // IntersectionObserver : zoom date quand le rail entre dans le viewport
+    // Expose lockedY pour que l'IntersectionObserver puisse le mettre à jour
+    window.__eraRailSetLockedY = (y) => { lockedY = y }
+
+    return () => {
+      window.removeEventListener('scroll',     preventScroll)
+      window.removeEventListener('wheel',      onWheel)
+      window.removeEventListener('touchstart', onTouchStart)
+      window.removeEventListener('touchmove',  onTouchMove)
+      delete window.__eraRailSetLockedY
+    }
+  }, [advance])
+
+  // ── IntersectionObserver — active/désactive + mémorise la position ───────
   useEffect(() => {
-    const el = railRef.current
+    const el = containerRef.current
     if (!el) return
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !dateAnimatedRef.current) {
-        dateAnimatedRef.current = true
-        setDateAnimated(true)
+      if (entry.isIntersecting) {
+        // Mémorise et verrouille la position de scroll
+        const y = window.scrollY
+        if (window.__eraRailSetLockedY) window.__eraRailSetLockedY(y)
+        isActive.current = true
+      } else {
+        isActive.current = false
       }
-      if (!entry.isIntersecting) {
-        dateAnimatedRef.current = false
-        setDateAnimated(false)
-        setDateZoomOut(false)
-      }
-    }, { threshold: 0.1 })
+    }, { threshold: 0.99 })
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
 
-  // Hauteur : même ratio que FloraRail → 500svh pour 3 panels (date+2 oeuvres)
-  // donc (N+1) * 250svh  (500/2 = 250 par oeuvre)
-  const railHeightSvh = (N + 1) * 250
+  // ── Init ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    initEra(0, 0)
+  }, [])
+
+  // ── Rendu ────────────────────────────────────────────────────────────────
+  const era       = ERA_DATA[eraIdx]
+  const DatePanel = era.DatePanel
 
   return (
     <div
-      id={id}
       className="s-horizontal-rail"
-      ref={railRef}
-      style={{ height: `${railHeightSvh}svh` }}
+      style={{ height: '100svh', position: 'relative' }}
     >
-      <div className="s-horizontal-sticky">
-        {/* track : (N+1) panels de 100vw — date + N oeuvres */}
+      {/* Sticky container — reste collé en haut pendant tout le scroll de la section */}
+      <div
+        ref={containerRef}
+        className="s-horizontal-sticky"
+        style={{ position: 'sticky', top: 0, height: '100svh', overflow: 'hidden' }}
+      >
+        {/*
+          Clipper intermédiaire — position absolute + inset 0 + overflow hidden
+          garantit que le slot-next (100svh plus bas) ne déborde jamais dans le viewport.
+        */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          overflow: 'hidden',
+        }}>
+        {/*
+          vwrap : height 200svh pour avoir deux slots de 100svh chacun.
+          Quand on translate le vwrap de -100svh, le slot-next remonte dans le viewport.
+          slot-current : top 0,      height 100svh → ère visible
+          slot-next    : top 100svh, height 100svh → ère en transit
+        */}
         <div
-          className="s-horizontal-track"
-          ref={trackRef}
-          style={{ width: `${(N+1)*100}vw` }}
+          ref={vwrapRef}
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0,
+            height: '200svh',
+            willChange: 'transform',
+          }}
         >
-          {/* Panel 0 : date */}
-          <div className="h-panel">
-            <DatePanel animated={dateAnimated} zoomOut={dateZoomOut} />
+          {/* Slot current — ère visible */}
+          <div style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0,
+            height: '100svh',
+            overflow: 'hidden',
+          }}>
+            {/* Track horizontal */}
+            <div
+              ref={trackRef}
+              style={{
+                display: 'flex',
+                height: '100%',
+                willChange: 'transform',
+                width: `${(era.oeuvres.length + 1) * 100}vw`,
+              }}
+            >
+              {/* Panel date */}
+              <div className="h-panel">
+                <DatePanel animated={dateAnim} zoomOut={dateZoomOut} />
+              </div>
+
+              {/* Panels oeuvres */}
+              {era.oeuvres.map(({ Component }, i) => (
+                <div key={`${eraIdx}-${i}`} className="h-panel">
+                  <Component
+                    progress={progresses[i] ?? 0}
+                    canStart={visibles[i]   ?? false}
+                    autoMode={false}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Panels oeuvres — exactement comme Flora/Bismarck dans FloraRail */}
-          {oeuvres.map(({ Component }, i) => (
-            <div key={i} className="h-panel">
-              <Component progress={progresses[i]} canStart={visibles[i]} autoMode={autoMode} />
-            </div>
-          ))}
+          {/* Slot next — vide, zone d'atterrissage pour le saut de ligne */}
+          <div style={{
+            position: 'absolute',
+            top: '100svh', left: 0, right: 0,
+            height: '100svh',
+            overflow: 'hidden',
+            background: '#000',
+          }} />
         </div>
+        </div> {/* fin clipper */}
       </div>
     </div>
   )
@@ -303,88 +579,39 @@ export default function App() {
   const [loadingDone, setLoadingDone] = useState(false)
   const lock = useScrollLock()
 
-  const era1890Ref = useRef(null)
-  const era1950Ref = useRef(null)
-  const era1980Ref = useRef(null)
-  const era2000Ref = useRef(null)
-  const accueilRef = useRef(null)
-  const machineRef = useRef(null)
-  const livreRef   = useRef(null)
+  const accueilRef  = useRef(null)
+  const machineRef  = useRef(null)
+  const livreRef    = useRef(null)
+  const afterEraRef = useRef(null)  // section après les ères (future section fin)
 
   useSectionLock(accueilRef, lock)
   useSectionLock(machineRef, lock)
   useSectionLock(livreRef,   lock)
 
   useEffect(() => {
-    // Désactive la restauration de scroll du navigateur
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
     window.scrollTo(0, 0)
   }, [])
 
   return (
     <>
-      <div ref={accueilRef}><FrameAccueil canStart={loadingDone} /></div>
-      <div ref={machineRef}><FrameMachine /></div>
-      <div ref={livreRef}><FrameLivre /></div>
-
-      {/* ── Ère 1890–1900 : Pitman, Flora, Bismarck, Victoria ── */}
-      <div ref={era1890Ref}>
-        <EraRail
-          id="s-era-1890"
-          nextRailRef={era1950Ref}
-          DatePanel={FrameDate1890}
-          oeuvres={[
-            { Component: PitmansManual },
-            { Component: FloraOeuvre },
-            { Component: Bismarck },
-            { Component: QueenVictoria },
-          ]}
-        />
+      <div ref={accueilRef}>
+        <FrameAccueil canStart={loadingDone} />
       </div>
 
-      {/* ── Ère 1950–1970 ── */}
-      <div ref={era1950Ref}>
-        <EraRail
-          id="s-era-1950"
-          nextRailRef={era1980Ref}
-          DatePanel={FrameDate1950}
-          oeuvres={[
-            { Component: WhisperPiece },
-            { Component: BeethovenToday },
-            { Component: CarnivalPanel },
-            { Component: Textum2 },
-            { Component: WordsLovely },
-            { Component: OPiece },
-          ]}
-        />
+      <div ref={machineRef}>
+        <FrameMachine />
       </div>
 
-      {/* ── Ère 1980 ── */}
-      <div ref={era1980Ref}>
-        <EraRail
-          id="s-era-1980"
-          nextRailRef={era2000Ref}
-          DatePanel={FrameDate1980}
-          oeuvres={[
-            { Component: UnusualLovePoem },
-          ]}
-        />
+      <div ref={livreRef}>
+        <FrameLivre />
       </div>
 
-      {/* ── Ère 2000–2012 ── */}
-      <div ref={era2000Ref}>
-        <EraRail
-          id="s-era-2000"
-          nextRailRef={null}
-          DatePanel={FrameDate2000}
-          oeuvres={[
-            { Component: TypewrittenPortraits },
-            { Component: LookingForward },
-            { Component: PatternSeries },
-            { Component: BarcelonaLove },
-          ]}
-        />
-      </div>
+      {/* Les 4 ères — EraRail gère tout en interne */}
+      <EraRail nextSectionRef={afterEraRef} />
+
+      {/* Section placeholder après les ères */}
+      <div ref={afterEraRef} style={{ height: '100svh', background: '#111' }} />
 
       <div id="keyboard-fixed"><Menu /></div>
       <StickyRoller />
