@@ -3,6 +3,21 @@ import couverture from '../images/couv.jpg'
 import barrieImg  from '../images/barrie-tullett.png'
 import keiraImg   from '../images/keirathboneeye.jpg'
 
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
+
+const SEG = 0.2
+function getTarget(p) {
+  if (p < SEG)     return 0
+  if (p < SEG * 2) return 1
+  if (p < SEG * 3) return 2
+  return 3
+}
+function getCTA(p) {
+  if (p < SEG)     return 'scroll to open ↓'
+  if (p < SEG * 3) return 'scroll to continue ↓'
+  return 'scroll to close ↓'
+}
+
 // ── Composant principal ───────────────────────────────────────────────────────
 export default function FrameLivre() {
   const railRef = useRef(null)
@@ -18,97 +33,46 @@ export default function FrameLivre() {
     const rail = railRef.current
     if (!rail) return
 
-    const pages     = [p1Ref.current, p2Ref.current, p3Ref.current]
-    const bl        = blRef.current
-    const sh        = shRef.current
-    const sp        = spRef.current
-    const cta       = ctaRef.current
-    const N         = pages.length
-    const THRESHOLD = 180
+    const pages = [p1Ref.current, p2Ref.current, p3Ref.current]
+    const bl    = blRef.current
+    const sh    = shRef.current
+    const sp    = spRef.current
+    const cta   = ctaRef.current
+    const N     = 3
 
-    let currentFlipped = 0
-    let isAnimating    = false
-    let blTimeout      = null
-    let scrollAccum    = 0
-    let lastDir        = 0
-    let bookActive     = false  // true = page gelée, livre en cours d'interaction
-    let everUnlocked   = false  // true = livre déjà parcouru+refermé → ne plus re-locker
+    let prev          = 0
+    let blTimeout     = null
+    let autoRun       = false
+    let autoTriggered = false
 
-    // ── Inject style scroll-lock ──────────────────────────────────────────
-    const styleEl = document.createElement('style')
-    styleEl.textContent = 'body.book-locked { overflow: hidden !important; }'
-    document.head.appendChild(styleEl)
-
-    // ── Verrou / déverrou page ────────────────────────────────────────────
-    function lockPage() {
-      if (bookActive || everUnlocked) return
-      bookActive = true
-      window.scrollTo({ top: rail.offsetTop, behavior: 'instant' })
-      document.body.classList.add('book-locked')
-    }
-
-    function unlockPage(scrollTarget) {
-      everUnlocked = true   // Ne plus jamais re-locker automatiquement
-      bookActive   = false
-      document.body.classList.remove('book-locked')
-      if (scrollTarget !== undefined) {
-        window.scrollTo({ top: scrollTarget, behavior: 'smooth' })
-      }
-    }
-
-    // ── Z-index ───────────────────────────────────────────────────────────
     function setZ() {
       pages.forEach((p, i) => {
         p.style.zIndex = p.classList.contains('flipped') ? i + 1 : N - i
       })
     }
 
-    // ── Décorations (shadow, spine, cta) ─────────────────────────────────
-    function updateDecor() {
-      const f = currentFlipped
-      sh.classList.toggle('open', f > 0)
-      sp.classList.toggle('visible', f > 0)
+    function updateDecor(target) {
+      sh.classList.toggle('open', target > 0)
+      sp.classList.toggle('visible', target > 0)
       clearTimeout(blTimeout)
-      if (f === 0) {
+      if (target === 0) {
         bl.classList.remove('visible')
         bl.style.background = ''
       } else {
-        bl.style.background = f === 1 ? '' : '#ffffff'
+        bl.style.background = target === 1 ? '' : '#ffffff'
         blTimeout = setTimeout(() => {
-          if (currentFlipped > 0) bl.classList.add('visible')
+          if (pages.some(p => p.classList.contains('flipped')))
+            bl.classList.add('visible')
         }, 650)
       }
-      if (cta) {
-        if      (f === 0) cta.textContent = 'scroll to open ↓'
-        else if (f < N)   cta.textContent = 'scroll to continue ↓'
-        else              cta.textContent = 'scroll to close ↓'
-      }
     }
 
-    // ── Retournement pages ────────────────────────────────────────────────
-    function next() {
-      if (currentFlipped >= N) return
-      pages[currentFlipped].classList.add('flipped')
-      currentFlipped++
-      setZ()
-      updateDecor()
-    }
-
-    function goBack() {
-      if (currentFlipped <= 0) return
-      currentFlipped--
-      pages[currentFlipped].classList.remove('flipped')
-      setZ()
-      updateDecor()
-    }
-
-    // ── Fermeture automatique après la dernière page ──────────────────────
     function autoClose() {
-      isAnimating = true
+      autoRun = true
       let cf = N
-      const hardLock = (e) => e.preventDefault()
-      window.addEventListener('wheel',     hardLock, { passive: false })
-      window.addEventListener('touchmove', hardLock, { passive: false })
+      const lock = (e) => e.preventDefault()
+      window.addEventListener('wheel',     lock, { passive: false })
+      window.addEventListener('touchmove', lock, { passive: false })
 
       function closeNext() {
         if (cf <= 0) {
@@ -116,14 +80,14 @@ export default function FrameLivre() {
           sh.classList.remove('open', 'closing')
           sp.classList.remove('visible')
           bl.classList.remove('visible')
-          currentFlipped = 0
-          scrollAccum    = 0
-          isAnimating    = false
-          window.removeEventListener('wheel',     hardLock)
-          window.removeEventListener('touchmove', hardLock)
-          updateDecor()
-          // Déverrouille et scrolle juste après le rail
-          unlockPage(rail.offsetTop + rail.offsetHeight)
+          if (cta) cta.textContent = 'scroll to open ↓'
+          prev = 0
+          autoRun = false
+          window.removeEventListener('wheel', lock)
+          window.removeEventListener('touchmove', lock)
+          // Scroll vers la section suivante (EraRail)
+          const bot = rail.getBoundingClientRect().bottom + window.scrollY
+          window.scrollTo({ top: bot, behavior: 'smooth' })
           return
         }
         cf--
@@ -139,67 +103,68 @@ export default function FrameLivre() {
         setTimeout(() => {
           page.classList.remove('fast')
           sh.classList.remove('closing')
+          updateDecor(cf)
           closeNext()
         }, 440)
       }
       closeNext()
     }
 
-    // ── Wheel handler ─────────────────────────────────────────────────────
-    function onWheel(e) {
-      if (!bookActive) return
-      e.preventDefault()
-      if (isAnimating) return
-
-      const dir = e.deltaY > 0 ? 1 : -1
-      if (dir !== lastDir) { scrollAccum = 0; lastDir = dir }
-      scrollAccum += e.deltaY
-
-      if (Math.abs(scrollAccum) < THRESHOLD) return
-      scrollAccum = 0
-
-      if (dir > 0) {
-        if (currentFlipped < N) {
-          isAnimating = true
-          next()
-          setTimeout(() => { isAnimating = false }, 650)
-        } else {
-          autoClose()
-        }
-      } else {
-        if (currentFlipped > 0) {
-          isAnimating = true
-          goBack()
-          setTimeout(() => { isAnimating = false }, 650)
-        } else {
-          // Scroll arrière depuis la couverture → déverrouille vers le haut
-          unlockPage(rail.offsetTop - window.innerHeight)
-        }
-      }
+    function onScroll(p) {
+      if (autoRun) return
     }
 
-    // ── IntersectionObserver ─────────────────────────────────────────────
-    // threshold 0.85 : attend que le rail soit bien visible avant de locker.
-    // everUnlocked   : si le livre a déjà été parcouru et refermé, plus de
-    //                  re-lock automatique — l'utilisateur scroll librement.
-    const observer = new IntersectionObserver(entries => {
-      const entry = entries[0]
-      if (entry.isIntersecting && !bookActive && !everUnlocked) {
-        lockPage()
-      }
-    }, { threshold: 0.85 })
+    // FrameLivre pilote ses pages via un progress interne
+    // accumulé depuis la molette, indépendamment du scroll natif de la page
+    let internalP  = 0
+    let isVisible  = false
 
+    // IntersectionObserver — active/désactive la capture molette
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting
+    }, { threshold: 0.5 })
     observer.observe(rail)
+
+    function onWheel(e) {
+      if (!isVisible) return
+      e.preventDefault()
+      const dy = e.deltaY
+      const railHeight = rail.offsetHeight - window.innerHeight
+      if (railHeight <= 0) return
+      internalP = clamp(internalP + dy / railHeight, 0, 1)
+      onScroll(internalP)
+    }
+
+    function onScrollP(p) {
+      if (cta) cta.textContent = getCTA(p)
+      if (p >= SEG * 4 && !autoTriggered) {
+        autoTriggered = true
+        autoClose()
+        return
+      }
+      const target = getTarget(p)
+      if (target === prev) return
+      pages.forEach((page, i) => {
+        if (i < target) page.classList.add('flipped')
+        else            page.classList.remove('flipped')
+      })
+      setZ()
+      updateDecor(target)
+      prev = target
+    }
+
+    // Redéfinit onScroll pour accepter un p direct
+    const origOnScroll = onScroll
+    onScroll = onScrollP
+
     window.addEventListener('wheel', onWheel, { passive: false })
     setZ()
-    updateDecor()
+    if (cta) cta.textContent = getCTA(0)
 
     return () => {
       window.removeEventListener('wheel', onWheel)
       observer.disconnect()
       clearTimeout(blTimeout)
-      document.body.classList.remove('book-locked')
-      styleEl.remove()
     }
   }, [])
 
@@ -215,9 +180,9 @@ export default function FrameLivre() {
             <div className="lv-scene">
               <div className="lv-book">
 
-                <div className="lv-book-left" ref={blRef} />
+                <div className="lv-book-left"  ref={blRef} />
 
-                {/* Page fixe droite */}
+                {/* Fond fixe droite — page Keira (visible après le dernier flip) */}
                 <div className="lv-book-right">
                   <img src={keiraImg} alt="Keira Rathbone" className="lv-keira" />
                   <span className="lv-keira-label">by Keira Rathbone</span>
@@ -225,11 +190,24 @@ export default function FrameLivre() {
 
                 <div className="lv-shadow" ref={shRef} />
 
-                {/* Page 3 : texte gauche / photo Barrie droite */}
+                {/* Page 3 (dessous) : recto = présentation livre / verso = Keira */}
                 <div className="lv-page lv-paper" ref={p3Ref}>
                   <div className="lv-face lv-fp lv-fp-l lv-text-face">
                     <p className="lv-body-text">
                       Typewriter Art: A Modern Anthology is a fascinating chronicle of &ldquo;the development of the typewriter as a medium for creating work far beyond anything envisioned by the machine's makers.&rdquo; The book illustrates the history of the genre through ample artwork spanning nearly 130&nbsp;years, as well as interviews with the most prominent artists in the field today.
+                    </p>
+                  </div>
+                  <div className="lv-face lv-back lv-fp lv-fp-r lv-photo-face">
+                    <img src={keiraImg} alt="Keira Rathbone" className="lv-barrie" />
+                    <span className="lv-pnum">2</span>
+                  </div>
+                </div>
+
+                {/* Page 2 (milieu) : recto = présentation Barrie / verso = ASCII Barrie */}
+                <div className="lv-page lv-paper" ref={p2Ref}>
+                  <div className="lv-face lv-fp lv-fp-l lv-text-face">
+                    <p className="lv-body-text">
+                      Barrie Tullett is Senior Lecturer in Graphic Design at the Lincoln School of Art and Design, and cofounder, with Philippa&nbsp;Wood, of The Caseroom Press, an independent publisher based in Lincoln and Edinburgh. As a freelance graphic designer, his clients have included Canongate Books, Princeton University Press, and Penguin Books.
                     </p>
                   </div>
                   <div className="lv-face lv-back lv-fp lv-fp-r lv-photo-face">
@@ -238,13 +216,10 @@ export default function FrameLivre() {
                   </div>
                 </div>
 
-                {/* Page 2 : texte gauche / titre droite */}
-                <div className="lv-page lv-paper" ref={p2Ref}>
-                  <div className="lv-face lv-fp lv-fp-l lv-text-face">
-                    <p className="lv-body-text">
-                      Barrie Tullett is Senior Lecturer in Graphic Design at the Lincoln School of Art and Design, and cofounder, with Philippa&nbsp;Wood, of The Caseroom Press, an independent publisher based in Lincoln and Edinburgh. As a freelance graphic designer, his clients have included Canongate Books, Princeton University Press, and Penguin Books.
-                    </p>
-                  </div>
+                {/* Page 1 (dessus) : recto = couverture / verso = page de garde */}
+                <div className="lv-page" ref={p1Ref}>
+                  <div className="lv-face lv-cover-front"
+                    style={{ backgroundImage: `url(${couverture})` }} />
                   <div className="lv-face lv-back lv-fp lv-fp-r lv-title-face">
                     <span className="lv-title">
                       Typewriter Art
@@ -253,13 +228,6 @@ export default function FrameLivre() {
                     <div className="lv-rule" />
                     <span className="lv-author">Barrie Tullett</span>
                   </div>
-                </div>
-
-                {/* Page 1 : couverture / contreplat */}
-                <div className="lv-page" ref={p1Ref}>
-                  <div className="lv-face lv-cover-front"
-                    style={{ backgroundImage: `url(${couverture})` }} />
-                  <div className="lv-face lv-back lv-cover-back" />
                 </div>
 
               </div>

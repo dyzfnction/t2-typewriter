@@ -582,13 +582,13 @@ function EraRail({ nextSectionRef, onRegisterJump }) {
             </div>
           </div>
 
-          {/* Slot next — vide, zone d'atterrissage pour le saut de ligne */}
+          {/* Slot next — invisible, zone d'atterrissage pour le saut de ligne */}
           <div style={{
             position: 'absolute',
             top: '100svh', left: 0, right: 0,
             height: '100svh',
             overflow: 'hidden',
-            background: '#000',
+            visibility: 'hidden',
           }} />
         </div>
         </div> {/* fin clipper */}
