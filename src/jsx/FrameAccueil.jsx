@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
+// FIX : chaque segment du titre est rendu comme un seul nœud (pas un span par char)
+// → le navigateur peut faire le retour à la ligne au bon endroit naturellement
 import { useLang } from './LangContext'
 
 // Titre sans <br> forcé — sur une seule ligne, wrap naturel du CSS
@@ -16,37 +18,36 @@ function jitter(base) { return Math.max(16, base + (Math.random() - 0.5) * 14) }
 
 export default function FrameAccueil({ canStart }) {
   const { t } = useLang()
-  const [nodes, setNodes] = useState([])
+  // segments = [{ id, type:'strong'|'text', content:string }]
+  // Chaque segment correspond à un bloc du titre (pas un char individuel).
+  // Le texte dans chaque segment grandit char par char → wrap naturel possible.
+  const [segments, setSegments] = useState([])
   const cancelRef = useRef(false)
 
   useEffect(() => {
     if (!canStart) return
     cancelRef.current = true
-    setNodes([])
+    setSegments([])
 
     const timeout = setTimeout(() => {
       cancelRef.current = false
 
       async function writeTitle() {
-        let id = 0
-        for (const seg of t.accueilTitle) {
+        for (let i = 0; i < t.accueilTitle.length; i++) {
+          const seg = t.accueilTitle[i]
           if (cancelRef.current) return
-          if (seg.strong) {
-            const nodeId = id++
-            setNodes(n => [...n, { id: nodeId, type: 'strong', content: '' }])
-            for (const char of seg.text) {
-              if (cancelRef.current) return
-              setNodes(n => n.map(nd =>
-                nd.id === nodeId ? { ...nd, content: nd.content + char } : nd
-              ))
-              await sleep(jitter(46))
-            }
-          } else {
-            for (const char of seg.text) {
-              if (cancelRef.current) return
-              setNodes(n => [...n, { id: id++, type: 'text', content: char }])
-              await sleep(jitter(54))
-            }
+
+          // Crée le segment vide d'abord
+          const type = seg.strong ? 'strong' : 'text'
+          setSegments(prev => [...prev, { id: i, type, content: '' }])
+
+          // Remplit le segment caractère par caractère
+          for (const char of seg.text) {
+            if (cancelRef.current) return
+            setSegments(prev =>
+              prev.map(s => s.id === i ? { ...s, content: s.content + char } : s)
+            )
+            await sleep(jitter(seg.strong ? 46 : 54))
           }
         }
       }
@@ -60,10 +61,11 @@ export default function FrameAccueil({ canStart }) {
     <section id="s-accueil">
       <header className="accueil-header">
         <h1 id="title-flag">
-          {nodes.map(node => {
-            if (node.type === 'strong') return <strong key={node.id}>{node.content}</strong>
-            return <span key={node.id}>{node.content}</span>
-          })}
+          {segments.map(seg =>
+            seg.type === 'strong'
+              ? <strong key={seg.id}>{seg.content}</strong>
+              : <span key={seg.id}>{seg.content}</span>
+          )}
         </h1>
       </header>
       <pre id="accueil-bg-ascii">{BG_ASCII}</pre>

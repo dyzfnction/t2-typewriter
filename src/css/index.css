@@ -145,7 +145,21 @@ body {
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
   line-height: var(--lh-tight);
-  max-width: 24ch;
+  /* Ne jamais dépasser la colonne disponible */
+  max-width: min(24ch, 100%);
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: none;
+  -webkit-hyphens: none;
+  /* Wrap naturel uniquement — pas de nowrap hérité */
+  white-space: normal;
+}
+
+#title-flag strong,
+#title-flag span {
+  /* Les inline enfants ne forcent pas de retour à la ligne */
+  display: inline;
+  white-space: normal;
 }
 
 #title-flag strong {
