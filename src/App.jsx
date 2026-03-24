@@ -631,8 +631,9 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // App
 // ─────────────────────────────────────────────────────────────────────────────
-function AppInner() {
-  const { toggleLang } = useLang()
+function AppInner({ toggleLangExternal }) {
+  const { toggleLang: toggleLangCtx } = useLang()
+  const toggleLang = toggleLangExternal ?? toggleLangCtx
   const [loadingDone, setLoadingDone] = useState(false)
   const lock = useScrollLock()
 
@@ -727,7 +728,6 @@ function AppInner() {
       </div>
 
       <div id="keyboard-fixed"><Menu navigateTo={(era, oeuvre) => {
-          console.log('[navigateTo]', era, oeuvre)
           if (era === 'machine') {
             machineRef.current?.scrollIntoView({ behavior: 'smooth' })
           } else if (era === 'toggleLang') {
@@ -746,5 +746,11 @@ function AppInner() {
 }
 
 export default function App() {
-  return <LangProvider><AppInner /></LangProvider>
+  const [lang, setLang] = useState('fr')
+  const toggleLang = () => setLang(l => l === 'fr' ? 'en' : 'fr')
+  return (
+    <LangProvider lang={lang} toggleLang={toggleLang}>
+      <AppInner key={lang} toggleLangExternal={toggleLang} />
+    </LangProvider>
+  )
 }

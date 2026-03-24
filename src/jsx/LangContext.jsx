@@ -53,9 +53,10 @@ const TEXTS = {
 
 const LangContext = createContext({ lang: 'fr', t: TEXTS.fr, toggleLang: () => {} })
 
-export function LangProvider({ children }) {
-  const [lang, setLang] = useState('fr')
-  const toggleLang = () => setLang(l => l === 'fr' ? 'en' : 'fr')
+export function LangProvider({ children, lang: langProp, toggleLang: toggleLangProp }) {
+  const [langInternal, setLang] = useState('fr')
+  const lang       = langProp       ?? langInternal
+  const toggleLang = toggleLangProp ?? (() => setLang(l => l === 'fr' ? 'en' : 'fr'))
   return (
     <LangContext.Provider value={{ lang, t: TEXTS[lang], toggleLang }}>
       {children}
