@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { LangProvider, useLang } from './jsx/LangContext'
 import PageChargement from './jsx/PageChargement'
 import FrameAccueil  from './jsx/FrameAccueil'
 import FrameMachine  from './jsx/FrameMachine'
 import FrameLivre    from './jsx/FrameLivre'
+import FrameFooter   from './jsx/FrameFooter'
 import StickyRoller  from './jsx/StickyRoller'
 import Menu          from './jsx/Menu'
 import ScrollHint    from './jsx/ScrollHint'
@@ -126,7 +128,7 @@ const ERA_DATA = [
   },
 ]
 
-function EraRail({ nextSectionRef, onRegisterJump }) {
+function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
   // ── State React ─────────────────────────────────────────────────────────
   const [eraIdx,     setEraIdx]     = useState(0)
   const [dateAnim,   setDateAnim]   = useState(false)
@@ -261,6 +263,7 @@ function EraRail({ nextSectionRef, onRegisterJump }) {
 
       if (isLast) {
         animating.current = false
+        isActive.current = false  // libère le scroll natif avant de naviguer
         if (nextSectionRef?.current) {
           nextSectionRef.current.scrollIntoView({ behavior: 'smooth' })
         }
@@ -417,6 +420,28 @@ function EraRail({ nextSectionRef, onRegisterJump }) {
     onRegisterJump?.(jumpTo)
   }, [])
 
+  // ── Réactivation depuis le footer (scroll arrière) ───────────────────────
+  function reactivate() {
+    const el = containerRef.current?.parentElement
+    if (!el) return
+    const y = el.offsetTop
+    window.scrollTo(0, y)
+    if (window.__eraRailSetLockedY) window.__eraRailSetLockedY(y)
+    isActive.current = true
+    // Place sur la dernière oeuvre de la dernière ère
+    const lastEra  = ERA_DATA.length - 1
+    const N        = ERA_DATA[lastEra].oeuvres.length
+    const lastStep = N * 2
+    initEra(lastEra, lastStep)
+    if (trackRef.current) {
+      trackRef.current.style.transform = `translateX(-${N * window.innerWidth}px)`
+    }
+  }
+
+  useEffect(() => {
+    onRegisterReactivate?.(reactivate)
+  }, [])
+
   // ── Capture molette + blocage scroll natif quand EraRail est actif ───────
   useEffect(() => {
     let wheelBuf = 0
@@ -487,18 +512,24 @@ function EraRail({ nextSectionRef, onRegisterJump }) {
 
   // ── IntersectionObserver — active/désactive + mémorise la position ───────
   useEffect(() => {
-    const el = containerRef.current
+    // On observe le rail (position: relative, dans le flux normal) et non le
+    // sticky (position: sticky), dont l'intersection ratio ne dépasse jamais
+    // le seuil depuis sa position visuelle collée.
+    const el = containerRef.current?.parentElement
     if (!el) return
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        // Mémorise et verrouille la position de scroll
-        const y = window.scrollY
+        // Utilise offsetTop du rail pour un lockedY fiable, indépendant de
+        // l'état du smooth-scroll en cours au moment du déclenchement.
+        const y = (entry.target).offsetTop
+        window.scrollTo(0, y)
         if (window.__eraRailSetLockedY) window.__eraRailSetLockedY(y)
+        if (window.__eraRailActive) window.__eraRailActive()
         isActive.current = true
       } else {
         isActive.current = false
       }
-    }, { threshold: 0.99 })
+    }, { threshold: 0.5 })
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
@@ -600,19 +631,69 @@ function EraRail({ nextSectionRef, onRegisterJump }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // App
 // ─────────────────────────────────────────────────────────────────────────────
-export default function App() {
+function AppInner() {
+  const { toggleLang } = useLang()
   const [loadingDone, setLoadingDone] = useState(false)
   const lock = useScrollLock()
 
-  const accueilRef  = useRef(null)
-  const machineRef  = useRef(null)
-  const livreRef    = useRef(null)
-  const afterEraRef = useRef(null)  // section après les ères (future section fin)
-  const eraJumpRef  = useRef(null)  // ref vers la fonction jumpTo d'EraRail
+  const accueilRef       = useRef(null)
+  const machineRef       = useRef(null)
+  const livreRef         = useRef(null)
+  const afterEraRef      = useRef(null)
+  const eraJumpRef       = useRef(null)
+  const eraReactivateRef = useRef(null)  // fn pour réveiller EraRail depuis le footer
+
+  // ── Historique simple des sections visitées (pour bouton retour) ─────────
+  const sectionHistoryRef = useRef([])
+  function pushHistory(name) {
+    const h = sectionHistoryRef.current
+    if (h[h.length - 1] !== name) h.push(name)
+  }
+  function goBack() {
+    const h = sectionHistoryRef.current
+    if (h.length < 2) return
+    h.pop() // retirer la section courante
+    const prev = h[h.length - 1]
+    if (prev === 'accueil') {
+      accueilRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (prev === 'machine') {
+      machineRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (prev === 'livre') {
+      livreRef.current?.scrollIntoView({ behavior: 'smooth' })
+    } else if (prev === 'era') {
+      eraReactivateRef.current?.()
+    } else if (prev === 'footer') {
+      afterEraRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  // Observe chaque section pour alimenter l'historique
+  useEffect(() => {
+    const entries = [
+      { ref: accueilRef,  name: 'accueil' },
+      { ref: machineRef,  name: 'machine' },
+      { ref: livreRef,    name: 'livre'   },
+      { ref: afterEraRef, name: 'footer'  },
+    ]
+    const observers = entries.map(({ ref, name }) => {
+      const el = ref.current
+      if (!el) return null
+      const obs = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) pushHistory(name)
+      }, { threshold: 0.5 })
+      obs.observe(el)
+      return obs
+    })
+    // EraRail n'a pas de ref directe ici, on écoute via un event global
+    window.__eraRailActive = () => pushHistory('era')
+    return () => {
+      observers.forEach(o => o?.disconnect())
+      delete window.__eraRailActive
+    }
+  }, [])
 
   useSectionLock(accueilRef, lock)
   useSectionLock(machineRef, lock)
-  // livreRef : verrou géré en interne par FrameLivre (lockPage / unlockPage)
 
   useEffect(() => {
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
@@ -634,15 +715,36 @@ export default function App() {
       </div>
 
       {/* Les 4 ères — EraRail gère tout en interne */}
-      <EraRail nextSectionRef={afterEraRef} onRegisterJump={fn => { eraJumpRef.current = fn }} />
+      <EraRail
+        nextSectionRef={afterEraRef}
+        onRegisterJump={fn => { eraJumpRef.current = fn }}
+        onRegisterReactivate={fn => { eraReactivateRef.current = fn }}
+      />
 
-      {/* Section placeholder après les ères */}
-      <div ref={afterEraRef} style={{ height: '100svh', background: '#111' }} />
+      {/* Section footer après les ères */}
+      <div ref={afterEraRef}>
+        <FrameFooter onScrollBack={() => eraReactivateRef.current?.()} />
+      </div>
 
-      <div id="keyboard-fixed"><Menu navigateTo={(era, oeuvre) => eraJumpRef.current?.(era, oeuvre)} /></div>
+      <div id="keyboard-fixed"><Menu navigateTo={(era, oeuvre) => {
+          console.log('[navigateTo]', era, oeuvre)
+          if (era === 'machine') {
+            machineRef.current?.scrollIntoView({ behavior: 'smooth' })
+          } else if (era === 'toggleLang') {
+            toggleLang()
+          } else if (era === '__back__') {
+            goBack()
+          } else {
+            eraJumpRef.current?.(era, oeuvre)
+          }
+        }} /></div>
       <StickyRoller />
       <ScrollHint />
       {!loadingDone && <PageChargement onFinish={() => setLoadingDone(true)} />}
     </>
   )
+}
+
+export default function App() {
+  return <LangProvider><AppInner /></LangProvider>
 }

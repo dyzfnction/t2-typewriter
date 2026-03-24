@@ -1,4 +1,7 @@
 import { useRef, useState } from 'react'
+import StreamlineSharpTypewriter from './StreamlineSharpTypewriter'
+import BackArrow from './StreamlineInterfaceArrowsTurnBackwardArrowBendCurveChangeDirectionReturnLeftBackBackward'
+import LanguageIcon from './FamiconsLanguageOutline__1_'
 
 // Mapping I–XIII → { era, oeuvre } selon ERA_DATA dans App.jsx
 // Ère 0 (1890): PitmansManual, FloraOeuvre, Bismarck, QueenVictoria
@@ -24,9 +27,9 @@ const KEY_NAV = {
 }
 
 const KEY_ROWS = [
-  ['🖨', 'I', 'II', 'III', 'IV', '☰'],
+  ['__PRINTER__', 'I', 'II', 'III', 'IV', '__LANG__'],
   ['V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'],
-  ['__TOGGLE__', 'XII', 'XIII', 'XIV', 'XV', 'B'],
+  ['__TOGGLE__', 'XII', 'XIII', 'XIV', 'XV', '__BACK__'],
 ]
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
@@ -120,10 +123,12 @@ export default function Menu({ navigateTo }) {
     if (KEY_NAV[label]) {
       const { era, oeuvre } = KEY_NAV[label]
       navigateTo?.(era, oeuvre)
-    } else if (label === '🖨') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } else if (label === 'B') {
-      window.history.back()
+    } else if (label === '__PRINTER__') {
+      navigateTo?.('machine')
+    } else if (label === '__BACK__') {
+      navigateTo?.('__back__')
+    } else if (label === '__LANG__') {
+      navigateTo?.('toggleLang')
     }
   }
 
@@ -160,7 +165,14 @@ export default function Menu({ navigateTo }) {
                 style={{ willChange: 'transform, opacity' }}
                 onClick={() => handleKeyClick(label)}
               >
-                <div className="key"><span>{label}</span></div>
+                <div className="key">
+                  <span>
+                    {label === '__PRINTER__' ? <StreamlineSharpTypewriter style={{ fontSize: '1.2em' }} /> :
+                     label === '__BACK__'    ? <BackArrow style={{ fontSize: '1.1em' }} /> :
+                     label === '__LANG__'    ? <LanguageIcon style={{ fontSize: '1.2em' }} /> :
+                     label}
+                  </span>
+                </div>
                 <div className="key-tige" />
               </div>
             )

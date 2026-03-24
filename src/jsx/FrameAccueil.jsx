@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useLang } from './LangContext'
 
 // Titre sans <br> forcé — sur une seule ligne, wrap naturel du CSS
 const TITLE_SEGMENTS = [
@@ -14,6 +15,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 function jitter(base) { return Math.max(16, base + (Math.random() - 0.5) * 14) }
 
 export default function FrameAccueil({ canStart }) {
+  const { t } = useLang()
   const [nodes, setNodes] = useState([])
   const cancelRef = useRef(false)
 
@@ -27,7 +29,7 @@ export default function FrameAccueil({ canStart }) {
 
       async function writeTitle() {
         let id = 0
-        for (const seg of TITLE_SEGMENTS) {
+        for (const seg of t.accueilTitle) {
           if (cancelRef.current) return
           if (seg.strong) {
             const nodeId = id++

@@ -1,25 +1,11 @@
 import { useEffect, useRef } from 'react'
+import { useLang } from './LangContext'
 import couverture from '../images/couv.jpg'
 import barrieImg  from '../images/barrie-tullett.png'
 import keiraImg   from '../images/keirathboneeye.jpg'
 
-function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
-
-const SEG = 0.2
-function getTarget(p) {
-  if (p < SEG)     return 0
-  if (p < SEG * 2) return 1
-  if (p < SEG * 3) return 2
-  return 3
-}
-function getCTA(p) {
-  if (p < SEG)     return 'scroll to open ↓'
-  if (p < SEG * 3) return 'scroll to continue ↓'
-  return 'scroll to close ↓'
-}
-
-// ── Composant principal ───────────────────────────────────────────────────────
 export default function FrameLivre() {
+  const { t } = useLang()
   const railRef = useRef(null)
   const p1Ref   = useRef(null)
   const p2Ref   = useRef(null)
@@ -33,17 +19,20 @@ export default function FrameLivre() {
     const rail = railRef.current
     if (!rail) return
 
-    const pages = [p1Ref.current, p2Ref.current, p3Ref.current]
-    const bl    = blRef.current
-    const sh    = shRef.current
-    const sp    = spRef.current
-    const cta   = ctaRef.current
-    const N     = 3
+    const pages     = [p1Ref.current, p2Ref.current, p3Ref.current]
+    const bl        = blRef.current
+    const sh        = shRef.current
+    const sp        = spRef.current
+    const cta       = ctaRef.current
+    const N         = pages.length
+    const THRESHOLD = 180
 
-    let prev          = 0
-    let blTimeout     = null
-    let autoRun       = false
-    let autoTriggered = false
+    let currentFlipped = 0
+    let isAnimating    = false
+    let done           = false
+    let blTimeout      = null
+    let scrollAccum    = 0
+    let lastDir        = 0
 
     function setZ() {
       pages.forEach((p, i) => {
@@ -51,24 +40,45 @@ export default function FrameLivre() {
       })
     }
 
-    function updateDecor(target) {
-      sh.classList.toggle('open', target > 0)
-      sp.classList.toggle('visible', target > 0)
+    function updateDecor() {
+      const f = currentFlipped
+      sh.classList.toggle('open', f > 0)
+      sp.classList.toggle('visible', f > 0)
       clearTimeout(blTimeout)
-      if (target === 0) {
+      if (f === 0) {
         bl.classList.remove('visible')
         bl.style.background = ''
       } else {
-        bl.style.background = target === 1 ? '' : '#ffffff'
+        bl.style.background = f === 1 ? '' : '#ffffff'
         blTimeout = setTimeout(() => {
-          if (pages.some(p => p.classList.contains('flipped')))
-            bl.classList.add('visible')
+          if (currentFlipped > 0) bl.classList.add('visible')
         }, 650)
+      }
+      if (cta) {
+        if      (f === 0) cta.textContent = t.livreCTA[0]
+        else if (f < N)   cta.textContent = t.livreCTA[1]
+        else              cta.textContent = t.livreCTA[2]
       }
     }
 
+    function next() {
+      if (currentFlipped >= N) return
+      pages[currentFlipped].classList.add('flipped')
+      currentFlipped++
+      setZ()
+      updateDecor()
+    }
+
+    function goBack() {
+      if (currentFlipped <= 0) return
+      currentFlipped--
+      pages[currentFlipped].classList.remove('flipped')
+      setZ()
+      updateDecor()
+    }
+
     function autoClose() {
-      autoRun = true
+      isAnimating = true
       let cf = N
       const lock = (e) => e.preventDefault()
       window.addEventListener('wheel',     lock, { passive: false })
@@ -80,14 +90,14 @@ export default function FrameLivre() {
           sh.classList.remove('open', 'closing')
           sp.classList.remove('visible')
           bl.classList.remove('visible')
-          if (cta) cta.textContent = 'scroll to open ↓'
-          prev = 0
-          autoRun = false
-          window.removeEventListener('wheel', lock)
-          window.removeEventListener('touchmove', lock)
-          // Scroll vers la section suivante (EraRail)
-          const bot = rail.getBoundingClientRect().bottom + window.scrollY
-          window.scrollTo({ top: bot, behavior: 'smooth' })
+          currentFlipped = 0
+          scrollAccum    = 0
+          isAnimating    = false
+          done           = true
+          window.removeEventListener('wheel',     lock, { passive: false })
+          window.removeEventListener('touchmove', lock, { passive: false })
+          window.removeEventListener('wheel', onWheel, { passive: false })
+          updateDecor()
           return
         }
         cf--
@@ -103,67 +113,50 @@ export default function FrameLivre() {
         setTimeout(() => {
           page.classList.remove('fast')
           sh.classList.remove('closing')
-          updateDecor(cf)
           closeNext()
         }, 440)
       }
       closeNext()
     }
 
-    function onScroll(p) {
-      if (autoRun) return
-    }
-
-    // FrameLivre pilote ses pages via un progress interne
-    // accumulé depuis la molette, indépendamment du scroll natif de la page
-    let internalP  = 0
-    let isVisible  = false
-
-    // IntersectionObserver — active/désactive la capture molette
-    const observer = new IntersectionObserver(([entry]) => {
-      isVisible = entry.isIntersecting
-    }, { threshold: 0.5 })
-    observer.observe(rail)
-
     function onWheel(e) {
-      if (!isVisible) return
+      if (done) return
+      const rect = rail.getBoundingClientRect()
+      const inView = rect.top <= 0 && rect.bottom >= window.innerHeight
+      if (!inView) return
+      if (isAnimating) return
       e.preventDefault()
-      const dy = e.deltaY
-      const railHeight = rail.offsetHeight - window.innerHeight
-      if (railHeight <= 0) return
-      internalP = clamp(internalP + dy / railHeight, 0, 1)
-      onScroll(internalP)
-    }
 
-    function onScrollP(p) {
-      if (cta) cta.textContent = getCTA(p)
-      if (p >= SEG * 4 && !autoTriggered) {
-        autoTriggered = true
-        autoClose()
-        return
+      const dir = e.deltaY > 0 ? 1 : -1
+      if (dir !== lastDir) { scrollAccum = 0; lastDir = dir }
+      scrollAccum += e.deltaY
+
+      if (Math.abs(scrollAccum) < THRESHOLD) return
+      scrollAccum = 0
+
+      if (dir > 0) {
+        if (currentFlipped < N) {
+          isAnimating = true
+          next()
+          setTimeout(() => { isAnimating = false }, 650)
+        } else {
+          autoClose()
+        }
+      } else {
+        if (currentFlipped > 0) {
+          isAnimating = true
+          goBack()
+          setTimeout(() => { isAnimating = false }, 650)
+        }
       }
-      const target = getTarget(p)
-      if (target === prev) return
-      pages.forEach((page, i) => {
-        if (i < target) page.classList.add('flipped')
-        else            page.classList.remove('flipped')
-      })
-      setZ()
-      updateDecor(target)
-      prev = target
     }
-
-    // Redéfinit onScroll pour accepter un p direct
-    const origOnScroll = onScroll
-    onScroll = onScrollP
 
     window.addEventListener('wheel', onWheel, { passive: false })
     setZ()
-    if (cta) cta.textContent = getCTA(0)
+    updateDecor()
 
     return () => {
-      window.removeEventListener('wheel', onWheel)
-      observer.disconnect()
+      window.removeEventListener('wheel', onWheel, { passive: false })
       clearTimeout(blTimeout)
     }
   }, [])
@@ -173,16 +166,15 @@ export default function FrameLivre() {
       <div id="s-livre-rail" ref={railRef}>
         <div id="s-livre-sticky">
 
-          {/* Zone livre — moitié haute */}
           <div className="lv-top">
             <p className="lv-cta" ref={ctaRef}>scroll to open ↓</p>
 
             <div className="lv-scene">
               <div className="lv-book">
 
-                <div className="lv-book-left"  ref={blRef} />
+                <div className="lv-book-left" ref={blRef} />
 
-                {/* Fond fixe droite — page Keira (visible après le dernier flip) */}
+                {/* Fixe droite : Keira */}
                 <div className="lv-book-right">
                   <img src={keiraImg} alt="Keira Rathbone" className="lv-keira" />
                   <span className="lv-keira-label">by Keira Rathbone</span>
@@ -190,37 +182,21 @@ export default function FrameLivre() {
 
                 <div className="lv-shadow" ref={shRef} />
 
-                {/* Page 3 (dessous) : recto = présentation livre / verso = Keira */}
+                {/* p3 : recto = photo Barrie / verso = présentation livre */}
                 <div className="lv-page lv-paper" ref={p3Ref}>
-                  <div className="lv-face lv-fp lv-fp-l lv-text-face">
-                    <p className="lv-body-text">
-                      Typewriter Art: A Modern Anthology is a fascinating chronicle of &ldquo;the development of the typewriter as a medium for creating work far beyond anything envisioned by the machine's makers.&rdquo; The book illustrates the history of the genre through ample artwork spanning nearly 130&nbsp;years, as well as interviews with the most prominent artists in the field today.
-                    </p>
-                  </div>
-                  <div className="lv-face lv-back lv-fp lv-fp-r lv-photo-face">
-                    <img src={keiraImg} alt="Keira Rathbone" className="lv-barrie" />
-                    <span className="lv-pnum">2</span>
-                  </div>
-                </div>
-
-                {/* Page 2 (milieu) : recto = présentation Barrie / verso = ASCII Barrie */}
-                <div className="lv-page lv-paper" ref={p2Ref}>
-                  <div className="lv-face lv-fp lv-fp-l lv-text-face">
-                    <p className="lv-body-text">
-                      Barrie Tullett is Senior Lecturer in Graphic Design at the Lincoln School of Art and Design, and cofounder, with Philippa&nbsp;Wood, of The Caseroom Press, an independent publisher based in Lincoln and Edinburgh. As a freelance graphic designer, his clients have included Canongate Books, Princeton University Press, and Penguin Books.
-                    </p>
-                  </div>
-                  <div className="lv-face lv-back lv-fp lv-fp-r lv-photo-face">
+                  <div className="lv-face lv-fp lv-fp-r lv-photo-face">
                     <img src={barrieImg} alt="Barrie Tullett" className="lv-barrie" />
-                    <span className="lv-pnum">1</span>
+                  </div>
+                  <div className="lv-face lv-back lv-fp lv-fp-l lv-text-face">
+                    <p className="lv-body-text">
+                      {t.livreAnthologie}
+                    </p>
                   </div>
                 </div>
 
-                {/* Page 1 (dessus) : recto = couverture / verso = page de garde */}
-                <div className="lv-page" ref={p1Ref}>
-                  <div className="lv-face lv-cover-front"
-                    style={{ backgroundImage: `url(${couverture})` }} />
-                  <div className="lv-face lv-back lv-fp lv-fp-r lv-title-face">
+                {/* p2 : recto = titre + auteur / verso = présentation Barrie */}
+                <div className="lv-page lv-paper" ref={p2Ref}>
+                  <div className="lv-face lv-fp lv-fp-r lv-title-face">
                     <span className="lv-title">
                       Typewriter Art
                       <span className="lv-subtitle">A Modern Anthology</span>
@@ -228,6 +204,18 @@ export default function FrameLivre() {
                     <div className="lv-rule" />
                     <span className="lv-author">Barrie Tullett</span>
                   </div>
+                  <div className="lv-face lv-back lv-fp lv-fp-l lv-text-face">
+                    <p className="lv-body-text">
+                      {t.livreBarrie}
+                    </p>
+                  </div>
+                </div>
+
+                {/* p1 : recto = couverture / verso = contreplat blanc */}
+                <div className="lv-page" ref={p1Ref}>
+                  <div className="lv-face lv-cover-front"
+                    style={{ backgroundImage: `url(${couverture})` }} />
+                  <div className="lv-face lv-back lv-cover-back" />
                 </div>
 
               </div>
@@ -235,11 +223,10 @@ export default function FrameLivre() {
             </div>
           </div>
 
-          {/* Zone citation — moitié basse */}
           <div className="lv-bot">
             <blockquote className="livre-quote">
-              «&nbsp;L'art n'est pas une&nbsp;chose, c'est une&nbsp;manière&nbsp;»
-              <cite>Elbert&nbsp;Hubbard, 1908</cite>
+              {t.livreQuote}
+              <cite>{t.livreQuoteCite}</cite>
             </blockquote>
           </div>
 

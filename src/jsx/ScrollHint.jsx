@@ -7,21 +7,17 @@ function useBgColor() {
 
   useEffect(() => {
     function update() {
-      // Cherche l'élément sticky visible au centre de l'écran
       const el = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2)
       if (!el) return
-      // Remonte jusqu'à trouver une couleur de fond non transparente
       let node = el
       while (node && node !== document.body) {
         const bg = window.getComputedStyle(node).backgroundColor
         if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
-          // Parse rgb
           const m = bg.match(/\d+/g)
           if (m) {
             const [r, g, b] = m.map(Number)
-            // Luminosité perceptuelle
             const lum = 0.299*r + 0.587*g + 0.114*b
-            setDark(lum < 140) // sombre si luminosité < 140
+            setDark(lum < 140)
             return
           }
         }
@@ -37,9 +33,21 @@ function useBgColor() {
 }
 
 export default function ScrollHint() {
-  const [visible, setVisible] = useState(false)
+  const [visible,   setVisible]   = useState(false)
+  const [onFooter,  setOnFooter]  = useState(false)
   const timerRef = useRef(null)
   const dark     = useBgColor()
+
+  // Cache le hint quand le footer est visible
+  useEffect(() => {
+    const footer = document.getElementById('s-footer')
+    if (!footer) return
+    const observer = new IntersectionObserver(([entry]) => {
+      setOnFooter(entry.isIntersecting)
+    }, { threshold: 0.1 })
+    observer.observe(footer)
+    return () => observer.disconnect()
+  }, [])
 
   function resetTimer() {
     setVisible(false)
@@ -61,11 +69,15 @@ export default function ScrollHint() {
   }, [])
 
   const color = dark
-    ? 'rgba(255, 251, 232, 0.75)'   // fond sombre → crème
-    : 'rgba(17, 17, 17, 0.65)'      // fond clair  → noir
+    ? 'rgba(255, 251, 232, 0.75)'
+    : 'rgba(17, 17, 17, 0.65)'
 
   return (
-    <div id="scroll-hint" className={visible ? 'visible' : ''} style={{ '--hint-color': color }}>
+    <div
+      id="scroll-hint"
+      className={visible && !onFooter ? 'visible' : ''}
+      style={{ '--hint-color': color }}
+    >
       <span className="hint-label">scroll</span>
       <span className="hint-arrow">↓</span>
     </div>
