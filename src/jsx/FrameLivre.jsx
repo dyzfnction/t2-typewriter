@@ -6,6 +6,10 @@ import keiraImg   from '../images/keirathboneeye.jpg'
 
 export default function FrameLivre() {
   const { t } = useLang()
+  // FIX #7 : on passe t dans une ref pour l'utiliser dans le useEffect sans stale closure
+  const tRef = useRef(t)
+  useEffect(() => { tRef.current = t }, [t])
+
   const railRef = useRef(null)
   const p1Ref   = useRef(null)
   const p2Ref   = useRef(null)
@@ -25,10 +29,12 @@ export default function FrameLivre() {
     const sp        = spRef.current
     const cta       = ctaRef.current
     const N         = pages.length
-    const THRESHOLD = 180
+    // FIX #7 : seuil abaissé pour fonctionner sur trackpad doux
+    const THRESHOLD = 80
 
     let currentFlipped = 0
     let isAnimating    = false
+    // FIX #7 : done ne bloque plus définitivement ; on peut re-ouvrir le livre
     let done           = false
     let blTimeout      = null
     let scrollAccum    = 0
@@ -42,6 +48,8 @@ export default function FrameLivre() {
 
     function updateDecor() {
       const f = currentFlipped
+      // FIX #7 : lit t depuis la ref pour toujours avoir la langue courante
+      const t = tRef.current
       sh.classList.toggle('open', f > 0)
       sp.classList.toggle('visible', f > 0)
       clearTimeout(blTimeout)
@@ -93,11 +101,14 @@ export default function FrameLivre() {
           currentFlipped = 0
           scrollAccum    = 0
           isAnimating    = false
-          done           = true
+          // FIX #7 : on ne met plus done = true ici pour permettre
+          // de re-visiter le livre après l'avoir fermé
           window.removeEventListener('wheel',     lock, { passive: false })
           window.removeEventListener('touchmove', lock, { passive: false })
           window.removeEventListener('wheel', onWheel, { passive: false })
           updateDecor()
+          // Réattache le handler pour une nouvelle ouverture
+          window.addEventListener('wheel', onWheel, { passive: false })
           return
         }
         cf--
@@ -167,7 +178,7 @@ export default function FrameLivre() {
         <div id="s-livre-sticky">
 
           <div className="lv-top">
-            <p className="lv-cta" ref={ctaRef}>scroll to open ↓</p>
+            <p className="lv-cta" ref={ctaRef}>{t.livreCTA[0]}</p>
 
             <div className="lv-scene">
               <div className="lv-book">

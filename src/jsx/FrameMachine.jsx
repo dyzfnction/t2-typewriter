@@ -1,12 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
+// FIX #5 : import du contexte de langue pour les paragraphes bilingues
+import { useLang } from './LangContext'
 
-const PARAS = [
-  "La première machine à\u00A0écrire pratique fut inventée par\u00A0Charles\u00A0Thurber et brevetée en\u00A01843, mais elle ne\u00A0fut jamais produite en\u00A0série.",
-  "La machine à\u00A0écrire est passée de\u00A0révolutionnaire à\u00A0son apogée à\u00A0symbole sentimental d'obsolescence à\u00A0notre époque.",
-  "Elle fonctionne simplement\u00A0: on\u00A0insère une\u00A0feuille sur\u00A0le cylindre derrière un\u00A0ruban encreur. En\u00A0appuyant sur\u00A0une\u00A0touche, une\u00A0barre frappe le\u00A0ruban pour\u00A0imprimer le\u00A0caractère sur\u00A0le papier.",
-  "Le chariot avance ligne par\u00A0ligne et, à\u00A0la\u00A0fin, il\u00A0est ramené au\u00A0départ tandis que le\u00A0cylindre positionne le\u00A0papier pour\u00A0continuer l'écriture.",
-]
+// PARAS n'est plus une constante statique — on utilise t.machineParagraphs depuis LangContext
 
 const TRANS = 0.08
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
@@ -135,7 +132,6 @@ function Machine3D({ containerRef }) {
     const SP = (r,s=20) => new THREE.SphereGeometry(r,s,s)
     const TR = (R,r,ts=16,rs=40,a=Math.PI*2) => new THREE.TorusGeometry(R,r,ts,rs,a)
 
-    // Body
     add(BX(7.10,0.52,5.20), MAT.bodyD, 0,0.26,0.10)
     for (const [fx,fz] of [[-2.8,-2.2],[-2.8,2.15],[2.8,-2.2],[2.8,2.15]])
       add(CY(0.25,0.28,0.15,18), MAT.rubber, fx,0.07,fz)
@@ -155,7 +151,7 @@ function Machine3D({ containerRef }) {
     add(BX(7.10,1.25,0.46), MAT.bodyD, 0,0.83,-2.28)
     for (let v=0;v<9;v++) add(BX(4.40,0.040,0.030), m(0x180e04,0.93,0), 0,0.30+v*0.11,-2.28)
     add(BX(6.40,0.26,4.40), MAT.body, 0,1.74,0.12)
-    add(BX(5.75,0.10,3.70), MAT.bodyD, 0,1.88,0.12) // y=1.88 anti z-fight
+    add(BX(5.75,0.10,3.70), MAT.bodyD, 0,1.88,0.12)
     for (let x=-2.95;x<=2.95;x+=0.47) {
       add(CY(0.037,0.037,0.044,8), MAT.brass, x,1.46,2.39)
       add(CY(0.037,0.037,0.044,8), MAT.brass, x,0.54,2.39)
@@ -166,7 +162,6 @@ function Machine3D({ containerRef }) {
     for (const [dx,dz] of [[-2.85,-2.1],[-2.85,2.15],[2.85,-2.1],[2.85,2.15]])
       add(CY(0.040,0.040,0.044,8), MAT.brass, dx,1.87,dz)
 
-    // Carriage rails
     add(BX(7.80,0.13,0.13), MAT.chrome, 0,1.87,-0.60)
     add(BX(7.80,0.13,0.13), MAT.chrome, 0,1.87,0.60)
     for (const ex of [-3.90,3.90]) add(CY(0.16,0.16,0.27,18), MAT.chrome, ex,1.87,0, 0,0,Math.PI/2)
@@ -177,7 +172,6 @@ function Machine3D({ containerRef }) {
     add(BX(0.13,0.25,0.12), MAT.brass, RACKW/2+0.14,1.84,0)
     add(BX(0.25,0.09,0.12), MAT.brass, RACKW/2+0.07,1.78,0)
 
-    // Carriage group
     const CG = new THREE.Group(); CG.position.set(0,1.88,0); TW.add(CG)
     function cg(geo,mat,x=0,y=0,z=0,rx=0,ry=0,rz=0) { return add(geo,mat,x,y,z,rx,ry,rz,CG) }
     cg(BX(5.80,0.38,1.45), MAT.body)
@@ -185,7 +179,6 @@ function Machine3D({ containerRef }) {
     cg(BX(5.60,0.060,0.060), MAT.chrome, 0,0.22,-0.74)
     for (const cx of [-2.92,2.92]) cg(BX(0.22,0.44,1.45), MAT.chromeD, cx,0.07,0)
 
-    // Platen — noir pur
     const platMat = m(0x000000, 0.97, 0.00)
     const platen = new THREE.Mesh(CY(0.55,0.55,6.10,64), platMat)
     platen.rotation.z = Math.PI/2; platen.position.set(0,0.60,-0.06)
@@ -197,7 +190,6 @@ function Machine3D({ containerRef }) {
     const bk = new THREE.Mesh(CY(0.38,0.34,0.34,22), MAT.chrome); bk.rotation.z = Math.PI/2; bk.position.set(3.34,0.60,-0.06); CG.add(bk)
     const lk = new THREE.Mesh(CY(0.38,0.34,0.34,22), MAT.chrome); lk.rotation.z = Math.PI/2; lk.position.set(-3.34,0.60,-0.06); CG.add(lk)
 
-    // Paper
     const paperCanvas = document.createElement('canvas')
     paperCanvas.width = 512; paperCanvas.height = 1024
     const ptx = paperCanvas.getContext('2d')
@@ -213,7 +205,6 @@ function Machine3D({ containerRef }) {
     const COLS = 36, CHARS_PER_PAGE = COLS * 20
     let paperFill = 0, paperFading = false, paperFadeT = 0, totalCharsOnPage = 0
 
-    // Paper bail
     const bail = new THREE.Mesh(CY(0.052,0.052,4.95,18), MAT.chrome)
     bail.rotation.z = Math.PI/2; bail.position.set(0,0.68,0.70); CG.add(bail)
     for (const bx2 of [-1.75,1.75]) {
@@ -223,21 +214,18 @@ function Machine3D({ containerRef }) {
     for (const px of [-1.02,1.02]) cg(BX(0.09,0.36,0.09), MAT.chromeD, px,0.84,0.66)
     cg(BX(4.90,0.09,0.28), MAT.chromeD, 0,0.90,0.88)
 
-    // Carriage return lever
     const CR = new THREE.Group(); CR.position.set(-3.80,1.88,0); TW.add(CR)
     add(BX(0.11,0.11,1.18), MAT.chrome, 0,0,0.59, 0,0,0, CR)
     add(BX(0.11,0.66,0.11), MAT.chrome, 0,0.33,1.18, 0,0,0, CR)
     add(SP(0.155,15), MAT.rubber, 0,0.70,1.18, 0,0,0, CR)
     for (const mx of [-2.14,1.68]) cg(BX(0.17,0.32,0.34), MAT.red, mx,0.25,-0.25)
 
-    // Typebar basket
     const seg = new THREE.Mesh(TR(2.00,0.078,15,72,Math.PI*1.12), MAT.chromeD)
     seg.position.set(0,1.76,1.14); seg.rotation.x = -Math.PI*0.42; TW.add(seg)
     const segI = new THREE.Mesh(TR(1.74,0.057,11,68,Math.PI*1.10), MAT.body)
     segI.position.set(0,1.76,1.14); segI.rotation.x = -Math.PI*0.42; TW.add(segI)
     add(BX(4.95,0.09,0.28), MAT.chromeD, 0,1.92,0.88)
 
-    // Typebars
     const typebars = []
     for (let side=0;side<2;side++) {
       for (let i=0;i<46;i++) {
@@ -255,7 +243,6 @@ function Machine3D({ containerRef }) {
       }
     }
 
-    // Ribbon spools
     for (const sx of [-2.10,2.10]) {
       add(CY(0.088,0.088,0.26,14), MAT.chromeD, sx,1.84,-0.60)
       add(CY(0.52,0.52,0.062,40), MAT.chromeD, sx,1.75,-0.60)
@@ -269,7 +256,6 @@ function Machine3D({ containerRef }) {
     add(BX(0.25,0.068,0.046), MAT.chromeD, 0,1.98,0.74)
     for (const ex of [-0.60,0.60]) add(TR(0.066,0.022,8,18), MAT.chrome, ex,1.90,0.56, Math.PI/2,0,0)
 
-    // Colour selector + Bell
     add(BX(0.60,0.15,0.58), MAT.bodyD, -3.02,1.72,1.18)
     add(BX(0.48,0.12,0.24), MAT.red, -3.02,1.80,1.06)
     add(BX(0.48,0.12,0.24), MAT.blue, -3.02,1.80,1.28)
@@ -280,7 +266,6 @@ function Machine3D({ containerRef }) {
     add(CY(0.057,0.057,0.34,11), MAT.chromeD, 3.16,1.62,-0.58)
     for (const ox of [-1.64,1.64]) add(CY(0.074,0.074,0.058,12), MAT.brassW, ox,1.87,-1.70)
 
-    // Keyboard
     const KB = new THREE.Group(); KB.position.set(0,0.98,3.17); KB.rotation.x = 0.32; TW.add(KB)
     add(BX(5.20,0.24,1.90), MAT.body, 0,0,0, 0,0,0, KB)
     const ksp=0.340, r1hw=(13-1)*ksp/2, KY=0.12
@@ -464,15 +449,12 @@ function Machine3D({ containerRef }) {
       if (hits.length>0) { const k=hitToKey.get(hits[0].object); if (k?.char) doType(k.char) }
     }
 
-    // Zoom : Ctrl+molette sur le canvas, ou pinch mobile
-    // Le scroll simple reste libre pour la page
     function onWheel(e) {
-      if (!e.ctrlKey && !e.metaKey) return // scroll normal → laisse passer
+      if (!e.ctrlKey && !e.metaKey) return
       e.preventDefault()
       e.stopPropagation()
       tD += e.deltaY * 0.015; tD = Math.max(5, Math.min(80, tD))
     }
-    // Pinch-to-zoom mobile
     let lastPinchDist = 0
     function onTouchStartPinch(e) {
       if (e.touches.length === 2) {
@@ -574,14 +556,29 @@ function Machine3D({ containerRef }) {
 }
 
 export default function FrameMachine() {
+  // FIX #5 : utilise les paragraphes depuis LangContext (bilingue)
+  const { t } = useLang()
+
   const railRef         = useRef(null)
   const machine3dRef    = useRef(null)
   const renderedIdxRef  = useRef(-1)
   const targetCountRef  = useRef(0)
   const displayCountRef = useRef(0)
   const rafMachineRef   = useRef(null)
+  // FIX #5 : on garde une ref des paragraphes pour y accéder dans le handler scroll
+  const parasRef        = useRef(t.machineParagraphs)
   const [paraText,    setParaText]    = useState('')
   const [paraOpacity, setParaOpacity] = useState(1)
+
+  // FIX #5 : met à jour la ref quand la langue change
+  useEffect(() => {
+    parasRef.current = t.machineParagraphs
+    // Reset le texte affiché quand la langue change
+    renderedIdxRef.current = -1
+    displayCountRef.current = 0
+    targetCountRef.current = 0
+    setParaText('')
+  }, [t.machineParagraphs])
 
   function animateMachine(text) {
     rafMachineRef.current = null
@@ -598,6 +595,8 @@ export default function FrameMachine() {
 
   useEffect(() => {
     function onScroll() {
+      // FIX #5 : lit depuis la ref pour toujours avoir les bons paragraphes (langue courante)
+      const PARAS = parasRef.current
       const rail = railRef.current; if (!rail) return
       const railTop    = rail.getBoundingClientRect().top + window.scrollY
       const railHeight = rail.offsetHeight - window.innerHeight

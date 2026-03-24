@@ -40,6 +40,9 @@ export default function StickyRoller() {
   function onMouseDown(e) {
     e.preventDefault()
     dragging.current = true
+    // FIX #1 : signale à EraRail de ne pas bloquer le scroll pendant le drag
+    window.__rollerDragging = true
+
     const move = e => {
       const pct = pctFromX(e.clientX)
       const bar = rollerRef.current
@@ -48,6 +51,7 @@ export default function StickyRoller() {
     }
     const up = () => {
       dragging.current = false
+      window.__rollerDragging = false
       window.removeEventListener('mousemove', move)
       window.removeEventListener('mouseup', up)
     }
@@ -57,6 +61,9 @@ export default function StickyRoller() {
 
   function onTouchStart() {
     dragging.current = true
+    // FIX #1 : signale à EraRail de ne pas bloquer le scroll pendant le drag
+    window.__rollerDragging = true
+
     const move = e => {
       const pct = pctFromX(e.touches[0].clientX)
       const bar = rollerRef.current
@@ -65,6 +72,7 @@ export default function StickyRoller() {
     }
     const end = () => {
       dragging.current = false
+      window.__rollerDragging = false
       window.removeEventListener('touchmove', move)
       window.removeEventListener('touchend', end)
     }

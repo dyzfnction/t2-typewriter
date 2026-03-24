@@ -73,21 +73,6 @@ function useSectionLock(ref, lock) {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // EraRail
-//
-// S'intègre dans le flux normal du scroll (position: sticky).
-// Quand il est visible (intersection), il capture la molette et gère
-// lui-même la navigation horizontale + les transitions verticales entre ères.
-//
-// Architecture interne :
-//   vwrap (height: 200%) — wrapper vertical
-//     slot-current (top: 0,   height: 50%) — ère visible
-//       track — flex horizontal, translate en X selon progress
-//         panel date + panels oeuvres
-//     slot-next (top: 50%, height: 50%)  — ère en transit (vide sauf pendant animation)
-//
-// Transitions :
-//   Retour chariot avant  : progress→0 (600ms) puis vwrap 0%→-100% (350ms) → swap
-//   Retour chariot arrière: vwrap -100%→0% (350ms) + progress 1→0 auto (400+N*200ms)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ERA_DATA = [
@@ -129,39 +114,24 @@ const ERA_DATA = [
 ]
 
 function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
-  // ── State React ─────────────────────────────────────────────────────────
   const [eraIdx,     setEraIdx]     = useState(0)
   const [dateAnim,   setDateAnim]   = useState(false)
   const [dateZoomOut,setDateZoomOut]= useState(false)
-
-  // stepIndex : index global de l'étape courante dans l'ère
-  //   0          = panel date
-  //   1          = oeuvre 0, sous-étape image  (canStart=true,  progress=0)
-  //   2          = oeuvre 0, sous-étape texte  (canStart=true,  progress=1)
-  //   3          = oeuvre 1, sous-étape image
-  //   4          = oeuvre 1, sous-étape texte
-  //   ...
-  //   2*N+1      = dernier step → déclenche retour chariot
   const [stepIndex,  setStepIndex]  = useState(0)
   const [progresses, setProgresses] = useState([])
   const [visibles,   setVisibles]   = useState([])
 
-  // ── Refs ─────────────────────────────────────────────────────────────────
   const eraIdxRef   = useRef(0)
-  const stepRef     = useRef(0)        // stepIndex synchrone
+  const stepRef     = useRef(0)
   const animating   = useRef(false)
-  const stepping    = useRef(false)    // true pendant la transition entre steps
+  const stepping    = useRef(false)
   const isActive    = useRef(false)
 
   const containerRef = useRef(null)
   const vwrapRef     = useRef(null)
   const trackRef     = useRef(null)
 
-  // ── Calcule les props des oeuvres depuis stepIndex ───────────────────────
   function stateFromStep(step, N) {
-    // step 0 = date
-    // step 2i-1 = oeuvre i-1 image (progress=0)
-    // step 2i   = oeuvre i-1 texte (progress=1)
     const newProg = Array(N).fill(0)
     const newVis  = Array(N).fill(false)
     for (let i = 0; i < N; i++) {
@@ -174,22 +144,14 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     return { newProg, newVis }
   }
 
-  // ── Applique un step au track (translation horizontale) ──────────────────
   function applyStep(step, N) {
     if (!trackRef.current) return
-    // Chaque oeuvre occupe 1 panel. On slide d'un panel à la fois.
-    // step 0 = date (translateX 0)
-    // step 1,2 = oeuvre 0 (translateX 1*vw)
-    // step 3,4 = oeuvre 1 (translateX 2*vw)
     const panelIdx = step === 0 ? 0 : Math.ceil(step / 2)
     const tx = panelIdx * window.innerWidth
     trackRef.current.style.transform = `translateX(-${tx}px)`
-
-    // Date visible seulement sur step 0
     if (step > 0) setDateAnim(false)
   }
 
-  // ── Passe au step suivant avec animation de slide ────────────────────────
   function goToStep(targetStep, N, onDone) {
     if (stepping.current) return
     stepping.current = true
@@ -199,7 +161,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     const needsSlide   = targetPanel !== currentPanel
 
     if (needsSlide) {
-      // Anime le slide horizontal
       const fromX = currentPanel * window.innerWidth
       const toX   = targetPanel  * window.innerWidth
       const DUR   = 500
@@ -219,7 +180,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     }
   }
 
-  // ── Init d'une ère ───────────────────────────────────────────────────────
   function initEra(idx, startStep) {
     const N    = ERA_DATA[idx].oeuvres.length
     const step = startStep ?? 0
@@ -232,7 +192,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     setProgresses(newProg)
     setVisibles(newVis)
 
-    // Date
     setDateAnim(false)
     setDateZoomOut(true)
     if (step === 0) {
@@ -242,7 +201,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     }
   }
 
-  // ── Retour chariot AVANT (fin d'ère → ère suivante) ─────────────────────
   function triggerReturnForward() {
     if (animating.current) return
     animating.current = true
@@ -251,7 +209,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     const N       = ERA_DATA[fromEra].oeuvres.length
     const isLast  = fromEra >= ERA_DATA.length - 1
 
-    // Phase 1 — slide retour vers le panel date (translateX → 0), 600ms
     const fromX = N * window.innerWidth
     const DUR1  = 600, t0 = performance.now()
     ;(function animReturn(now) {
@@ -263,14 +220,17 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
 
       if (isLast) {
         animating.current = false
-        isActive.current = false  // libère le scroll natif avant de naviguer
-        if (nextSectionRef?.current) {
-          nextSectionRef.current.scrollIntoView({ behavior: 'smooth' })
-        }
+        // FIX #3 & #6 : désactive EraRail puis délai avant scroll pour éviter
+        // que preventScroll bloque le scrollIntoView
+        isActive.current = false
+        setTimeout(() => {
+          if (nextSectionRef?.current) {
+            nextSectionRef.current.scrollIntoView({ behavior: 'smooth' })
+          }
+        }, 50)
         return
       }
 
-      // Phase 2 — saut de ligne vers le bas (vwrap 0 → -100svh), 350ms
       const DUR2 = 350, t1 = performance.now()
       const vwrap = vwrapRef.current
       ;(function animJump(now) {
@@ -286,7 +246,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     })(performance.now())
   }
 
-  // ── Retour chariot ARRIÈRE (début d'ère → ère précédente) ───────────────
   function triggerReturnBackward() {
     if (animating.current) return
     if (eraIdxRef.current === 0) return
@@ -295,7 +254,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     const prevIdx = eraIdxRef.current - 1
     const N       = ERA_DATA[prevIdx].oeuvres.length
 
-    // Prépare l'ère précédente dans slot-current à progress=1 (dernier panel)
     eraIdxRef.current = prevIdx
     stepRef.current   = N * 2
     const { newProg, newVis } = stateFromStep(N * 2, N)
@@ -310,7 +268,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     if (vwrap) vwrap.style.transform = 'translateY(-100svh)'
 
     requestAnimationFrame(() => {
-      // Phase 1 — saut de ligne vers le haut : -100svh → 0, 350ms
       const DUR1 = 350, t0 = performance.now()
       ;(function animJump(now) {
         const t   = Math.min(1, (now - t0) / DUR1)
@@ -319,7 +276,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
         if (t < 1) { requestAnimationFrame(animJump); return }
         if (vwrap) vwrap.style.transform = 'translateY(0)'
 
-        // Phase 2 — slide direct de la dernière oeuvre vers la date, 700ms
         const fromX = N * window.innerWidth
         const DUR2  = 700, t1 = performance.now()
         ;(function animSlide(now) {
@@ -329,7 +285,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
           if (t < 1) { requestAnimationFrame(animSlide); return }
           if (trackRef.current) trackRef.current.style.transform = 'translateX(0)'
 
-          // Arrivé sur la date
           stepRef.current = 0
           setStepIndex(0)
           setProgresses(Array(N).fill(0))
@@ -343,16 +298,14 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     })
   }
 
-  // ── Avancer d'un step (scroll vers l'avant) ─────────────────────────────
   function stepForward() {
     if (animating.current || stepping.current) return
     const era  = ERA_DATA[eraIdxRef.current]
     const N    = era.oeuvres.length
-    const maxStep = N * 2  // dernier step = texte dernière oeuvre
+    const maxStep = N * 2
     const next = stepRef.current + 1
 
     if (next > maxStep) {
-      // Fin de l'ère → retour chariot
       triggerReturnForward()
       return
     }
@@ -367,7 +320,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     })
   }
 
-  // ── Reculer d'un step (scroll vers l'arrière) ────────────────────────────
   function stepBackward() {
     if (animating.current || stepping.current) return
     const era = ERA_DATA[eraIdxRef.current]
@@ -375,7 +327,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     const prev = stepRef.current - 1
 
     if (prev < 0) {
-      // Début de l'ère → ère précédente
       triggerReturnBackward()
       return
     }
@@ -394,25 +345,21 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     })
   }
 
-  // ── Wrapper advance (détecte direction depuis delta) ─────────────────────
   const advance = useCallback((delta) => {
     if (Math.abs(delta) < 0.005) return
     if (delta > 0) stepForward()
     else stepBackward()
   }, [])
 
-  // ── Jump direct vers une oeuvre (depuis le Menu) ───────────────────────────
   function jumpTo(targetEraIdx, oeuvreIdx) {
     if (animating.current) return
     const N          = ERA_DATA[targetEraIdx].oeuvres.length
     const targetStep = 1 + oeuvreIdx * 2
     initEra(targetEraIdx, targetStep)
-    // Applique immédiatement le bon translateX sans animation
     if (trackRef.current) {
       const panelIdx = Math.ceil(targetStep / 2)
       trackRef.current.style.transform = `translateX(-${panelIdx * window.innerWidth}px)`
     }
-    // Scroll vers le rail
     if (containerRef.current) containerRef.current.scrollIntoView({ behavior: 'smooth' })
   }
 
@@ -420,7 +367,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     onRegisterJump?.(jumpTo)
   }, [])
 
-  // ── Réactivation depuis le footer (scroll arrière) ───────────────────────
   function reactivate() {
     const el = containerRef.current?.parentElement
     if (!el) return
@@ -428,7 +374,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     window.scrollTo(0, y)
     if (window.__eraRailSetLockedY) window.__eraRailSetLockedY(y)
     isActive.current = true
-    // Place sur la dernière oeuvre de la dernière ère
     const lastEra  = ERA_DATA.length - 1
     const N        = ERA_DATA[lastEra].oeuvres.length
     const lastStep = N * 2
@@ -442,15 +387,21 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     onRegisterReactivate?.(reactivate)
   }, [])
 
-  // ── Capture molette + blocage scroll natif quand EraRail est actif ───────
+  // FIX #6 : expose une fonction de désactivation pour le Menu
+  useEffect(() => {
+    window.__eraRailDeactivate = () => { isActive.current = false }
+    return () => { delete window.__eraRailDeactivate }
+  }, [])
+
   useEffect(() => {
     let wheelBuf = 0
     let wheelTmr = null
     let lockedY   = 0
 
-    // Bloque le scroll natif de la page pendant que EraRail est actif
+    // FIX #1 : ne bloque pas le scroll si StickyRoller est en train d'être draggé
     function preventScroll() {
       if (!isActive.current) return
+      if (window.__rollerDragging) return
       window.scrollTo(0, lockedY)
     }
 
@@ -463,7 +414,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
       if (e.deltaMode === 2) dy *= window.innerHeight
       if (wheelTmr) return
       if (Math.abs(dy) < 10) return
-      // Ère 0 + step 0 + scroll haut → scroll programmatique vers la section précédente
       if (eraIdxRef.current === 0 && stepRef.current === 0 && dy < 0) {
         isActive.current = false
         window.scrollTo({ top: lockedY - window.innerHeight, behavior: 'smooth' })
@@ -498,7 +448,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     window.addEventListener('touchstart', onTouchStart,  { passive: true  })
     window.addEventListener('touchmove',  onTouchMove,   { passive: false })
 
-    // Expose lockedY pour que l'IntersectionObserver puisse le mettre à jour
     window.__eraRailSetLockedY = (y) => { lockedY = y }
 
     return () => {
@@ -510,17 +459,11 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     }
   }, [advance])
 
-  // ── IntersectionObserver — active/désactive + mémorise la position ───────
   useEffect(() => {
-    // On observe le rail (position: relative, dans le flux normal) et non le
-    // sticky (position: sticky), dont l'intersection ratio ne dépasse jamais
-    // le seuil depuis sa position visuelle collée.
     const el = containerRef.current?.parentElement
     if (!el) return
     const observer = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) {
-        // Utilise offsetTop du rail pour un lockedY fiable, indépendant de
-        // l'état du smooth-scroll en cours au moment du déclenchement.
         const y = (entry.target).offsetTop
         window.scrollTo(0, y)
         if (window.__eraRailSetLockedY) window.__eraRailSetLockedY(y)
@@ -534,12 +477,10 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
     return () => observer.disconnect()
   }, [])
 
-  // ── Init ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     initEra(0, 0)
   }, [])
 
-  // ── Rendu ────────────────────────────────────────────────────────────────
   const era       = ERA_DATA[eraIdx]
   const DatePanel = era.DatePanel
 
@@ -548,27 +489,16 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
       className="s-horizontal-rail"
       style={{ height: '100svh', position: 'relative' }}
     >
-      {/* Sticky container — reste collé en haut pendant tout le scroll de la section */}
       <div
         ref={containerRef}
         className="s-horizontal-sticky"
         style={{ position: 'sticky', top: 0, height: '100svh', overflow: 'hidden' }}
       >
-        {/*
-          Clipper intermédiaire — position absolute + inset 0 + overflow hidden
-          garantit que le slot-next (100svh plus bas) ne déborde jamais dans le viewport.
-        */}
         <div style={{
           position: 'absolute',
           inset: 0,
           overflow: 'hidden',
         }}>
-        {/*
-          vwrap : height 200svh pour avoir deux slots de 100svh chacun.
-          Quand on translate le vwrap de -100svh, le slot-next remonte dans le viewport.
-          slot-current : top 0,      height 100svh → ère visible
-          slot-next    : top 100svh, height 100svh → ère en transit
-        */}
         <div
           ref={vwrapRef}
           style={{
@@ -578,14 +508,12 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
             willChange: 'transform',
           }}
         >
-          {/* Slot current — ère visible */}
           <div style={{
             position: 'absolute',
             top: 0, left: 0, right: 0,
             height: '100svh',
             overflow: 'hidden',
           }}>
-            {/* Track horizontal */}
             <div
               ref={trackRef}
               style={{
@@ -595,12 +523,10 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
                 width: `${(era.oeuvres.length + 1) * 100}vw`,
               }}
             >
-              {/* Panel date */}
               <div className="h-panel">
                 <DatePanel animated={dateAnim} zoomOut={dateZoomOut} />
               </div>
 
-              {/* Panels oeuvres */}
               {era.oeuvres.map(({ Component }, i) => (
                 <div key={`${eraIdx}-${i}`} className="h-panel">
                   <Component
@@ -613,7 +539,6 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
             </div>
           </div>
 
-          {/* Slot next — invisible, zone d'atterrissage pour le saut de ligne */}
           <div style={{
             position: 'absolute',
             top: '100svh', left: 0, right: 0,
@@ -622,7 +547,7 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
             visibility: 'hidden',
           }} />
         </div>
-        </div> {/* fin clipper */}
+        </div>
       </div>
     </div>
   )
@@ -642,33 +567,44 @@ function AppInner({ toggleLangExternal }) {
   const livreRef         = useRef(null)
   const afterEraRef      = useRef(null)
   const eraJumpRef       = useRef(null)
-  const eraReactivateRef = useRef(null)  // fn pour réveiller EraRail depuis le footer
+  const eraReactivateRef = useRef(null)
 
-  // ── Historique simple des sections visitées (pour bouton retour) ─────────
+  // FIX #2 : flag pour empêcher pushHistory pendant un goBack()
+  const isGoingBackRef = useRef(false)
+
   const sectionHistoryRef = useRef([])
   function pushHistory(name) {
+    // FIX #2 : ignore les intersections déclenchées par la navigation goBack
+    if (isGoingBackRef.current) return
     const h = sectionHistoryRef.current
     if (h[h.length - 1] !== name) h.push(name)
   }
   function goBack() {
     const h = sectionHistoryRef.current
     if (h.length < 2) return
-    h.pop() // retirer la section courante
+    h.pop()
     const prev = h[h.length - 1]
+
+    // FIX #2 : bloque pushHistory pendant la durée de la transition
+    isGoingBackRef.current = true
+    setTimeout(() => { isGoingBackRef.current = false }, 1400)
+
+    // FIX #6 : désactive EraRail avant tout scrollIntoView
+    window.__eraRailDeactivate?.()
+
     if (prev === 'accueil') {
-      accueilRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => accueilRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     } else if (prev === 'machine') {
-      machineRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => machineRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     } else if (prev === 'livre') {
-      livreRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => livreRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     } else if (prev === 'era') {
       eraReactivateRef.current?.()
     } else if (prev === 'footer') {
-      afterEraRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => afterEraRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
     }
   }
 
-  // Observe chaque section pour alimenter l'historique
   useEffect(() => {
     const entries = [
       { ref: accueilRef,  name: 'accueil' },
@@ -685,7 +621,6 @@ function AppInner({ toggleLangExternal }) {
       obs.observe(el)
       return obs
     })
-    // EraRail n'a pas de ref directe ici, on écoute via un event global
     window.__eraRailActive = () => pushHistory('era')
     return () => {
       observers.forEach(o => o?.disconnect())
@@ -715,21 +650,21 @@ function AppInner({ toggleLangExternal }) {
         <FrameLivre />
       </div>
 
-      {/* Les 4 ères — EraRail gère tout en interne */}
       <EraRail
         nextSectionRef={afterEraRef}
         onRegisterJump={fn => { eraJumpRef.current = fn }}
         onRegisterReactivate={fn => { eraReactivateRef.current = fn }}
       />
 
-      {/* Section footer après les ères */}
       <div ref={afterEraRef}>
         <FrameFooter onScrollBack={() => eraReactivateRef.current?.()} />
       </div>
 
       <div id="keyboard-fixed"><Menu navigateTo={(era, oeuvre) => {
           if (era === 'machine') {
-            machineRef.current?.scrollIntoView({ behavior: 'smooth' })
+            // FIX #6 : désactive EraRail avant de naviguer vers une autre section
+            window.__eraRailDeactivate?.()
+            setTimeout(() => machineRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
           } else if (era === 'toggleLang') {
             toggleLang()
           } else if (era === '__back__') {
