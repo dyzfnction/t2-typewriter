@@ -396,7 +396,8 @@ function EraRail({ nextSectionRef, onRegisterJump, onRegisterReactivate }) {
   useEffect(() => {
     let wheelBuf = 0
     let wheelTmr = null
-    let lockedY   = 0
+    // FIX mobile : initialiser lockedY avec la position réelle dès le montage
+    let lockedY = containerRef.current?.parentElement?.offsetTop ?? 0
 
     // FIX #1 : ne bloque pas le scroll si StickyRoller est en train d'être draggé
     function preventScroll() {

@@ -232,9 +232,9 @@ export function BeethovenToday({ progress = 0, canStart = false, autoMode = fals
     p2={[
       { text: '\u2018Beethoven Today\u2019 is a circular composition on ' },
       { text: 'yellow paper', italic: true },
-      { text: ', where layers of text accumulate en une ' },
-      { text: 'masse presque musicale', bold: true },
-      { text: ' de marques, \u00E9voquant \u00E0 la fois la densit\u00E9 orchestrale et les limites de la page imprim\u00E9e.' },
+      { text: ', where layers of text accumulate into an ' },
+      { text: 'almost musical mass', bold: true },
+      { text: ' of marks, evoking both orchestral density and the limits of the printed page.' },
     ]}
   />
 }
@@ -259,7 +259,7 @@ export function CarnivalPanel({ progress = 0, canStart = false, autoMode = false
     p2={[
       { text: 'Composed over eight years, ' },
       { text: 'Carnival', italic: true },
-      { text: ' consists of 16 perforated panels that can be dismantled and reassembled. Each panel is un dense ' },
+      { text: ' consists of 16 perforated panels that can be dismantled and reassembled. Each panel is a dense ' },
       { text: 'visual poem', bold: true },
       { text: ' produced on a typewriter, challenging the linearity of reading.' },
     ]}
@@ -406,9 +406,9 @@ export function LookingForward({ progress = 0, canStart = false, autoMode = fals
     lines={['\u2018Looking Forward\u2019', 'by Keira Rathbone', '(2010)']}
     p1={[
       { text: 'Keira Rathbone' },
-      { text: ' (b. ' }, { text: '1981', bold: true }, { text: ') is a British artist who creates des ' },
-      { text: 'portraits \u00E0 la machine \u00E0 \u00E9crire', italic: true },
-      { text: ' d\u2019une pr\u00E9cision extraordinaire, repoussant les limites entre ' },
+      { text: ' (née en ' }, { text: '1981', bold: true }, { text: ') est une artiste britannique qui crée des ' },
+      { text: 'portraits à la machine à écrire', italic: true },
+      { text: " d\u2019une précision extraordinaire, repoussant les limites entre " },
       { text: 'dessin et frappe', bold: true }, { text: '.' },
     ]}
     p2={[

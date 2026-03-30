@@ -140,24 +140,21 @@ body {
 }
 
 #title-flag {
-  font-size: clamp(1.6rem, 7vw, 2.8rem);
+  font-size: clamp(1.05rem, 4vw + 0.2rem, 2.7rem);
   font-weight: 800;
   letter-spacing: var(--ls-wide);
   text-transform: uppercase;
   line-height: var(--lh-tight);
-  /* Ne jamais dépasser la colonne disponible */
-  max-width: min(24ch, 100%);
-  overflow-wrap: break-word;
-  word-break: break-word;
-  hyphens: none;
-  -webkit-hyphens: none;
-  /* Wrap naturel uniquement — pas de nowrap hérité */
   white-space: normal;
+}
+
+/* Titre français plus long → on réduit légèrement la taille */
+[data-lang="fr"] #title-flag {
+  font-size: clamp(0.85rem, 3.2vw + 0.15rem, 2.2rem);
 }
 
 #title-flag strong,
 #title-flag span {
-  /* Les inline enfants ne forcent pas de retour à la ligne */
   display: inline;
   white-space: normal;
 }
@@ -976,14 +973,14 @@ body {
 .ov2-header {
   position: relative;
   z-index: 10;
-  padding: 120px 28px 0;
+  padding: clamp(62px, 11svh, 110px) clamp(16px, 4vw, 28px) 0;
   text-align: center;
   flex-shrink: 0;
 }
 
 .ov2-title-italic {
   font-family: 'Courier New', monospace;
-  font-size: 18px;
+  font-size: clamp(13px, 2.2vw + 0.3rem, 18px);
   font-style: italic;
   font-weight: 700;
   color: #111;
@@ -996,7 +993,7 @@ body {
 
 .ov2-title-sub {
   font-family: 'Courier New', monospace;
-  font-size: 18px;
+  font-size: clamp(13px, 2.2vw + 0.3rem, 18px);
   font-weight: 700;
   color: #111;
   margin-top: 4px;
@@ -1045,14 +1042,14 @@ body {
 /* Description — absolue par-dessus, s'affiche quand image disparaît */
 .ov2-desc {
   position: absolute;
-  top: 211px;
+  top: clamp(150px, 26svh, 201px);
   left: 0; right: 0; bottom: 0;
   z-index: 6;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 1rem clamp(20px, 6vw, 32px) 120px;
-  gap: 1rem;
+  padding: clamp(0.5rem, 1.5svh, 1rem) clamp(16px, 6vw, 32px) clamp(60px, 10svh, 120px);
+  gap: clamp(0.5rem, 1.5svh, 1rem);
   pointer-events: none;
   transition: opacity 0.35s ease;
   overflow: hidden;
@@ -1060,7 +1057,7 @@ body {
 
 .ov2-para {
   font-family: 'Courier New', monospace;
-  font-size: 1rem;
+  font-size: clamp(0.78rem, 1.5vw + 0.1rem, 1rem);
   font-weight: 400;
   line-height: 1.75;
   color: #111;
@@ -1264,4 +1261,31 @@ body {
   .footer-sep { display: none; }
   .footer-card { padding: 1.5rem 1.25rem; }
   .footer-card-site { font-size: 1.1rem; }
+
+  /* Titres oeuvres sur mobile */
+  .ov2-title-italic,
+  .ov2-title-sub {
+    font-size: clamp(11px, 3.2vw, 15px);
+  }
+
+  /* Descriptions plus hautes sur petit écran */
+  .ov2-desc {
+    top: clamp(130px, 22svh, 170px);
+  }
+
+  .ov2-para {
+    font-size: clamp(0.72rem, 3vw, 0.88rem);
+    line-height: 1.65;
+  }
+}
+
+/* Très grands écrans */
+@media (min-width: 1200px) {
+  .ov2-title-italic,
+  .ov2-title-sub {
+    font-size: clamp(16px, 1.4vw, 22px);
+  }
+  .ov2-para {
+    font-size: clamp(0.95rem, 1vw, 1.1rem);
+  }
 }

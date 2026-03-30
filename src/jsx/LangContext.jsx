@@ -4,7 +4,7 @@ const TEXTS = {
   fr: {
     // Accueil
     accueilTitle: [
-      { text: 'Une\u00A0Histoire Visuelle de\u00A0l\u2019Art de\u00A0la\u00A0Machine\u00A0à\u00A0Écrire de\u00A0' },
+      { text: 'Une\u00A0Histoire Visuelle de\u00A0l\u2019Art de la Machine à Écrire de\u00A0' },
       { text: '1893', strong: true },
       { text: '\u00A0à\u00A0' },
       { text: "Aujourd'hui", strong: true },
